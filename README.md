@@ -3,6 +3,7 @@ A discord bot that anyone can modify and commit to!
 
 # Features
 Check the current features of the bot by inviting it https://discordapp.com/oauth2/authorize?client_id=610225885093691467&scope=bot&permissions=8
+Now has music commands!
 
 # Programming languages
 You can use any programming language but preferably NodeJS, Java or Python
