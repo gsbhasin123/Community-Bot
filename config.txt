@@ -1,0 +1,96 @@
+owner = 524288464422830095
+
+prefix = "/"
+
+//Please don't modify this
+game = "NONE"
+
+// Valid options: ONLINE IDLE DND INVISIBLE
+//Also dont edit this please
+
+status = ONLINE
+
+
+// If you set this to true, the bot will list the title of the song it is currently playing in its
+// "Playing" status. Note that this will ONLY work if the bot is playing music on ONE guild;
+// if the bot is playing on multiple guilds, this will not work.
+//I think you understand now
+
+songinstatus=false
+
+
+// If you set this, the bot will also use this prefix in addition to
+// the one provided above
+//This can be changed
+
+altprefix = "@mention"
+
+
+// If you set these, it will change the various emojis
+//If you have better emojis that are on every discord server then feel free to edit this
+success = "ðŸŽ¶"
+warning = "ðŸ’¡"
+error = "ðŸš«"
+loading = "âŒš"
+searching = "ðŸ”Ž"
+
+help = dev-help
+//Just ignore this ^^^
+
+// If you set this, the "nowplaying" command will show youtube thumbnails
+// Note: If you set this to true, the nowplaying boxes will NOT refresh
+// This is because refreshing the boxes causes the image to be reloaded
+// every time it refreshes.
+//I don't mind if its edited
+npimages = false
+
+
+// If you set this, the bot will not leave a voice channel after it finishes a queue.
+// Keep in mind that being connected to a voice channel uses additional bandwith,
+// so this option is not recommended if bandwidth is a concern.
+//This can be edited if you want but it can drain your internet and slow down connection speeds if more people use it
+stayinchannel = false
+
+
+// This sets the maximum amount of seconds any track loaded can be. If not set or set
+// to any number less than or equal to zero, there is no maximum time length. This time
+// restriction applies to songs loaded from any source.
+//Please just leave this, Rythm can't do this so it is better
+maxtime = 0
+
+
+// This sets an alternative folder to be used as the Playlists folder
+// This can be a relative or absolute path
+//I dont really know what this does :P
+playlistsfolder = "Playlists"
+
+// By default, the bot will DM the owner if the bot is running and a new version of the bot
+// becomes available. Set this to false to disable this feature.
+//Please leave this. It lets me know when its updated, I am using Jagrosh's bot
+updatealerts=true
+
+
+// Changing this changes the lyrics provider
+// Currently available providers: "A-Z Lyrics", "Genius", "MusicMatch"
+// At the time of writing, I would recommend sticking with A-Z Lyrics or MusicMatch,
+// as Genius tends to have a lot of non-song results and you might get something 
+// completely unrelated to what you want.
+// If you are interested in contributing a provider, please see
+// https://github.com/jagrosh/JLyrics
+//Its better to leave it
+
+lyrics.default = "A-Z Lyrics"
+
+
+// If you set this to true, it will enable the eval command for the bot owner. This command
+// allows the bot owner to run arbitrary code from the bot's account.
+//
+// WARNING:
+// This command can be extremely dangerous. If you don't know what you're doing, you could
+// cause horrific problems on your Discord server or on whatever computer this bot is running
+// on. Never run this command unless you are completely positive what you are running.
+//
+// DO NOT ENABLE THIS IF YOU DON'T KNOW WHAT THIS DOES OR HOW TO USE IT
+// IF SOMEONE ASKS YOU TO ENABLE THIS, THERE IS AN 11/10 CHANCE THEY ARE TRYING TO SCAM YOU
+//I don't know what this does...
+eval=false
