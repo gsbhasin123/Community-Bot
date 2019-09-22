@@ -35,8 +35,7 @@ error = "ðŸš«"
 loading = "âŒš"
 searching = "ðŸ”Ž"
 
-help = dev-help
-//Just ignore this ^^^
+help = help
 
 // If you set this, the "nowplaying" command will show youtube thumbnails
 // Note: If you set this to true, the nowplaying boxes will NOT refresh
