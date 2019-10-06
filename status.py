@@ -17,7 +17,7 @@ async def on_ready():
         await client.change_presence(activity=activity)
         await asyncio.sleep(12)
 
-        activity = discord.Activity(name='Streaming bootiful music to everyone', type=discord.ActivityType.streaming)
+        activity = discord.Activity(name='bootiful music to everyone', type=discord.ActivityType.streaming)
         await client.change_presence(activity=activity)
         await asyncio.sleep(12)
 
