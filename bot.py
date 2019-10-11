@@ -1,22 +1,42 @@
+import asyncio
 import discord
-from discord.ext import *
-import asyncio #Modules that are going to be imported
+from discord.ext import commands
 
-client = discord.Client()
-f=open("token.txt", "r")
-if f.mode == 'r':
+with open('token.txt') as f:
     token = f.read()
-#Variables above
 
-@client.event
+bot = commands.Bot(command_prefix='/')
+bot.remove_command("help")
+
+
+@bot.listen()
 async def on_ready():
-    for i in client.guilds:
-        await client.get_channel(624957376457605120).send('- ' + i.name)
+    print('Bot has been started')
+    while True:
 
-@client.event
-async def on_guild_join(guild):
-    await client.get_channel(624957376457605120).send('- ' + guild.name)
-    #Sends the list of servers to the server list channel
+        activity = discord.Activity(name='Nightcore', type=discord.ActivityType.listening)
+        await bot.change_presence(activity=activity)
+        await asyncio.sleep(12)
 
-client.run(token)
-#What starts the bot
+        activity = discord.Activity(name='bootiful music to everyone', type=discord.ActivityType.streaming)
+        await bot.change_presence(activity=activity)
+        await asyncio.sleep(12)
+
+        activity = discord.Activity(name='on ManjaroPE (Best Mcpe Server)', type=discord.ActivityType.playing)
+        await bot.change_presence(activity=activity)
+        await asyncio.sleep(12)
+
+        activity = discord.Activity(name='/help to people using this bot', type=discord.ActivityType.streaming)
+        await bot.change_presence(activity=activity)
+        await asyncio.sleep(12)
+
+@bot.command(name='server-count')
+async def server_count(ctx):
+        await ctx.send(len(bot.guilds))
+
+@bot.command()
+async def github(ctx):
+    embed=discord.Embed(title="GitHub", description="Thanks you for being interested in Community bot! If you want to commit please know we don't mind whatever language you choose to help us(Even `C`)\nhttps://github.com/IpProxyNeon/Community-discord-bot/blob/master/README.md", color=0x00ffff)
+    await ctx.send(embed=embed)
+
+bot.run(token)
