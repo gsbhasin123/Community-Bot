@@ -30,10 +30,6 @@ async def on_ready():
         await bot.change_presence(activity=activity)
         await asyncio.sleep(12)
 
-@bot.command(name='server-count')
-async def server_count(ctx):
-        await ctx.send(len(bot.guilds))
-
 @bot.listen()
 
 async def on_message(message):
@@ -59,6 +55,10 @@ async def on_message(message):
                 pass     
     except:
         pass
+
+@bot.command(name='server-count')
+async def server_count(ctx):
+        await ctx.send(len(bot.guilds))
 
 @bot.command()
 async def github(ctx):
