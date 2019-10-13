@@ -3,6 +3,7 @@ A discord bot that anyone can modify and commit to!
 
 # Features
 Check the current features of the bot by inviting it https://discordapp.com/oauth2/authorize?client_id=610225885093691467&scope=bot&permissions=8
+The discord server for the bot: https://discord.gg/zF8z7ar
 
 Now has music commands
 
