@@ -18,4 +18,4 @@ Also if you can recreate the current features (/help) please do so, it would be 
 For people looking to use this bot, Most of the features aren't on GitHub yet until they are remade in actual code, which I am working on.
 
 # Acknowledgements
-DJ0RDJ3 - The actual host for the bot (Da best person ever!)
+DJ0RDJ3#3296 - The actual host for the bot (Da best person ever!)
