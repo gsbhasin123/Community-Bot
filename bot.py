@@ -8,6 +8,41 @@ with open('token.txt') as f:
 bot = commands.Bot(command_prefix='/')
 bot.remove_command("help")
 
+@bot.listen()
+
+async def on_message(message):
+
+    CIDs = [632866275957407764,632857499535671301,610218900021313553,610218548920582155,632884808795815936,632872557548404738,632989220960600082]
+
+    msg = message.content
+
+    msg = msg.replace("@", "(a)")
+
+    X = 0
+
+    if message.author.id != bot.user.id:
+
+        try:
+
+            if message.channel.id in CIDs:
+
+                CIDs.remove(message.channel.id)
+
+                for channel in CIDs:
+
+                    await bot.get_channel(CIDs[X]).send(f'{message.author}: {msg}')
+
+                    X = X + 1
+
+                CIDs.append[message.channel.id]
+
+            else:
+
+                pass
+
+        except:
+
+            pass
 
 @bot.listen()
 async def on_ready():
