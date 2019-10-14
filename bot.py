@@ -77,10 +77,10 @@ async def github(ctx):
 @bot.command(name='update')
 @commands.is_owner()
 async def say(ctx):
-    ctx.send('Updating the bot now....')
+    await ctx.send('Updating the bot now....')
     try:
         os.system("bash ~/update.sh")
      except:
-        ctx.send('You are not the registered owner of this bot, therefore cannot run this command, ask the owner of the bot to allow you to use this command or if you are the owner of the bot, you need to actually make the update.sh yourself... Sorry!')
+        await ctx.send('You are not the registered owner of this bot, therefore cannot run this command, ask the owner of the bot to allow you to use this command or if you are the owner of the bot, you need to actually make the update.sh yourself... Sorry!')
 
 bot.run(token)
