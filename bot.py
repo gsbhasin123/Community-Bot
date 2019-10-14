@@ -67,7 +67,7 @@ async def on_ready():
 
 @bot.command(name='server-count')
 async def server_count(ctx):
-        await ctx.send(len(bot.guilds))
+        await ctx.send(f"I'm in {len(bot.guilds)} servers!")
 
 @bot.command()
 async def github(ctx):
