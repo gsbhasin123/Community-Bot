@@ -74,4 +74,13 @@ async def github(ctx):
     embed=discord.Embed(title="GitHub", description="Thanks you for being interested in Community bot! If you want to commit please know we don't mind whatever language you choose to help us(Even `C`)\nhttps://github.com/IpProxyNeon/Community-discord-bot/blob/master/README.md", color=0x00ffff)
     await ctx.send(embed=embed)
 
+@bot.command(name='update')
+@commands.is_owner()
+async def say(ctx):
+    ctx.send('Updating the bot now....')
+    try:
+        os.system("bash ~/update.sh")
+     except:
+        ctx.send('You are not the registered owner of this bot, therefore cannot run this command, ask the owner of the bot to allow you to use this command or if you are the owner of the bot, you need to actually make the update.sh yourself... Sorry!')
+
 bot.run(token)
