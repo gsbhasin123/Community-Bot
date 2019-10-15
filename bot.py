@@ -74,4 +74,15 @@ async def github(ctx):
     embed=discord.Embed(title="GitHub", description="Thanks you for being interested in Community bot! If you want to commit please know we don't mind whatever language you choose to help us(Even `C`)\nhttps://github.com/IpProxyNeon/Community-discord-bot/blob/master/README.md", color=0x00ffff)
     await ctx.send(embed=embed)
 
+@bot.command()
+@commands.is_owner()
+async def say(self,ctx):
+    try:
+        msg = ctx.message.content
+        msg = msg.replace('/say ', '')
+        embed=discord.Embed(title=msg, color=0xf9213a)
+        await ctx.send(embed=embed)
+    except:
+        await.ctx.send("You don't own me!")
+
 bot.run(token)
