@@ -82,6 +82,6 @@ async def say(self,ctx):
         embed=discord.Embed(title=msg, color=0xf9213a)
         await ctx.send(embed=embed)
     except:
-        await.ctx.send("You don't own me!")
+        await ctx.send("You don't own me!")
 
 bot.run(token)
