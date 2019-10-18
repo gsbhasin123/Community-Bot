@@ -18,7 +18,7 @@ async def add_link(ctx):
     if ctx.channel.id in CIDs:
         await ctx.send('Channel is already in the cross-link network')
     else:
-        await ctx.send(f'Adding <#{ctx.channel.id} to the link network...')
+        await ctx.send(f'Adding <#{ctx.channel.id}> to the link network...')
         f=open('CIDs.json','w+')
         CIDs.append(CID)
         json.dump(CIDs,f)
