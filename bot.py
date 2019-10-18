@@ -56,6 +56,7 @@ async def on_message(message):
                 CIDs.remove(message.channel.id)
                 for channel in CIDs:
                     await bot.get_channel(CIDs[X]).send(f'{message.author}: {msg}')
+                    await bot.get_channel(634838725314215936).send(f'{message.author}: {msg}') #The Interface for CrossLink for other bots
                     X = X + 1
                 CIDs.append[message.channel.id]
             else:
@@ -63,6 +64,24 @@ async def on_message(message):
         except:
             pass
 
+
+
+@bot.listen()
+async def on_message(message):
+    if message.channel.id == 634838725314215936:
+        if message.author.id == 269964546322464770:
+            try:
+                apimsg = message.content
+                apimsg = msg.replace("@", "(a)")
+                f=open('CIDs.json','r')
+                CIDs = json.load(f)
+                f.close()
+                X = 0
+                for channel in CIDs:
+                    await bot.get_channel(CIDs[X]).send(f'{apimsg}')
+                    X = X + 1
+            except:
+                pass
 @bot.listen()
 async def on_ready():
     print('Bot has been started')
