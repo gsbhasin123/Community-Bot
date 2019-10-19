@@ -113,6 +113,12 @@ async def github(ctx):
     await ctx.send(embed=embed)
 
 @bot.command()
+async def help(ctx):
+    help=open('help1.txt','r')
+    await ctx.send(help.read())
+    help.close()
+
+@bot.command()
 @commands.is_owner()
 async def say(self,ctx):
     try:
