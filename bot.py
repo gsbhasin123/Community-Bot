@@ -56,9 +56,9 @@ async def on_message(message):
                 CIDs.remove(message.channel.id)
                 for channel in CIDs:
                     await bot.get_channel(CIDs[X]).send(f'{message.author}: {msg}')
-                    await bot.get_channel(634838725314215936).send(f'{message.author}: {msg}') #The Interface for CrossLink for other bots
                     X = X + 1
                 CIDs.append[message.channel.id]
+                await bot.get_channel(634838725314215936).send(f'{message.author}: {msg}') #The Interface for CrossLink for other bots
             else:
                 pass
         except:
