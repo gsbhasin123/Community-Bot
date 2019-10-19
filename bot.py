@@ -58,7 +58,7 @@ async def on_message(message):
                     await bot.get_channel(CIDs[X]).send(f'{message.author}: {msg}')
                     X = X + 1
                 CIDs.append[message.channel.id]
-                await bot.get_channel(634838725314215936).send(f'{message.author}: {msg}') #The Interface for CrossLink for other bots
+                await bot.get_channel(635055057662115851).send(f'{message.author}: {msg}') #The Interface for CrossLink for other bots
 
             else:
                 pass
