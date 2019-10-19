@@ -1,0 +1,50 @@
+====Music Help====
+
+/lyrics (song name) - shows the lyrics to the currently-playing song
+
+/nowplaying - shows the song that is currently playing
+
+/play <title|URL|subcommand> - plays the provided song
+
+/playlists - shows the available playlists
+
+/queue (PageNumber) - shows the current queue
+
+/remove <position|ALL> - removes a song from the queue
+
+/search <query> - searches Youtube for a provided query
+
+/scsearch <query> - searches Soundcloud for a provided query
+
+/shuffle - shuffles songs you have added
+
+/skip - votes to skip the current song
+
+====DJ Help====
+
+/forceskip - skips the current song
+
+/movetrack <from> <to> - move a track in the current queue to a different position
+
+/pause - pauses the current song
+
+/playnext <title|URL> - plays a single song next
+
+/repeat (on|off) - re-adds music to the queue when finished
+
+/skipto <position> - skips to the specified song
+
+/stop - stops the current song and clears the queue
+
+/volume (0-150) - sets or shows volume]
+
+====Miscellaneous Help====
+
+/github - Sends a link to my GitHub!
+
+/server-count - It sends the amount of servers it's in! (Even tho you could just check the status yourself :P)
+
+/add-link - Adds the current channel into the Link network!
+
+/remove-link - It disables the link TwT
+
