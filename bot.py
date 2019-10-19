@@ -50,7 +50,6 @@ async def on_message(message):
     msg = message.content
     msg = msg.replace("@", "(a)")
     X = 0
-    await bot.get_channel(634838725314215936).send(f'{message.author}: {msg}') #The Interface for CrossLink for other bots
     if message.author.id != bot.user.id:
         try:
             if message.channel.id in CIDs:
@@ -59,6 +58,7 @@ async def on_message(message):
                     await bot.get_channel(CIDs[X]).send(f'{message.author}: {msg}')
                     X = X + 1
                 CIDs.append[message.channel.id]
+                await bot.get_channel(634838725314215936).send(f'{message.author}: {msg}') #The Interface for CrossLink for other bots
 
             else:
                 pass
