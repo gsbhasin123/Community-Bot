@@ -119,6 +119,6 @@ async def help(ctx):
     help.close()
 
 @bot.command()
-async def invite(ctx)
+async def invite(ctx):
     await ctx.send("Thanks for inviting me to your server!\nhttps://discordapp.com/oauth2/authorize?client_id=610225885093691467&scope=bot&permissions=8")
 bot.run(token)
