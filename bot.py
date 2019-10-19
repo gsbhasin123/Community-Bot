@@ -18,7 +18,7 @@ async def server_list(ctx):
 
 @bot.listen()
 async def on_guild_join(guild):
-    await bot.get_channel(624957376457605120).send('- ' + guild.name)
+    await bot.get_channel(635077321807626250).send(f'-{guild.name}')
     #Sends the list of servers to the server list channel
 
 @bot.command(name='add-link')
