@@ -9,6 +9,18 @@ with open('token.txt') as f:
 bot = commands.Bot(command_prefix='/')
 bot.remove_command("help")
 
+@bot.event(name='server-list')
+async def server_list(ctx):
+    ctx.send("Warning, it's a little spammy and takes a while to finish")
+    for i in client.guilds:
+        await ctx.send(f'-{i.name}')
+        #Sends a list of the current servers its in in the current channel
+
+@bot.listen()
+async def on_guild_join(guild):
+    await bot.get_channel(624957376457605120).send('- ' + guild.name)
+    #Sends the list of servers to the server list channel
+
 @bot.command(name='add-link')
 async def add_link(ctx):
     CID = ctx.channel.id
