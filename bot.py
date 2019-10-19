@@ -64,7 +64,12 @@ async def on_message(message):
     X = 0
     if message.author.id != bot.user.id:
         try:
-            if message.channel.id in CIDs:
+            if message.channel.id == 635119816528625674:
+                if message.author.id == 269964546322464770:
+                   for channel in CIDs:
+                        bot.get_channel(CIDs[X]).send(f'{msg}')
+                        X = X + 1
+            elif message.channel.id in CIDs:
                 CIDs.remove(message.channel.id)
                 for channel in CIDs:
                     await bot.get_channel(CIDs[X]).send(f'{message.author}: {msg}')
@@ -76,7 +81,6 @@ async def on_message(message):
                 pass
         except:
             pass
-
 
 
 @bot.listen()
