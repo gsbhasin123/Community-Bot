@@ -119,14 +119,6 @@ async def help(ctx):
     help.close()
 
 @bot.command()
-@commands.is_owner()
-async def say(self,ctx):
-    try:
-        msg = ctx.message.content
-        msg = msg.replace('/say ', '')
-        embed=discord.Embed(title=msg, color=0xf9213a)
-        await ctx.send(embed=embed)
-    except:
-        await ctx.send("You don't own me!")
-
+async def invite(ctx)
+    await ctx.send("Thanks for inviting me to your server!\nhttps://discordapp.com/oauth2/authorize?client_id=610225885093691467&scope=bot&permissions=8")
 bot.run(token)
