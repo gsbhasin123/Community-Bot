@@ -9,7 +9,7 @@ with open('token.txt') as f:
 bot = commands.Bot(command_prefix='/')
 bot.remove_command("help")
 
-@bot.event(name='server-list')
+@bot.command(name='server-list')
 async def server_list(ctx):
     ctx.send("Warning, it's a little spammy and takes a while to finish")
     for i in client.guilds:
