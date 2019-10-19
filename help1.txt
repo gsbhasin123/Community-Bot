@@ -48,3 +48,6 @@
 
 /remove-link - It disables the link TwT
 
+/support - Sends the invite link for the support server
+
+/invite - Sends the invite link for the bot
