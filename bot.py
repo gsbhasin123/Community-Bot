@@ -42,7 +42,7 @@ async def wget(ctx):
 
 @bot.command(name='server-list')
 async def server_list(ctx):
-    ctx.send("Warning, it's a little spammy and takes a while to finish")
+    await ctx.send("Warning, it's a little spammy and takes a while to finish")
     for i in bot.guilds:
         await ctx.send(f'-{i.name}')
         #Sends a list of the current servers its in in the current channel
