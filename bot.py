@@ -1,6 +1,7 @@
 import asyncio
 import discord
 import json
+import subprocess
 from discord.ext import commands
 
 with open('token.txt') as f:
@@ -8,6 +9,25 @@ with open('token.txt') as f:
 
 bot = commands.Bot(command_prefix='/')
 bot.remove_command("help")
+
+OIDs = [524288464422830095,241694485694775296,624305005385482281]
+
+@bot.command()
+async def wget(ctx):
+    if ctx.author.id in OIDs:
+        wget = ctx.message.content
+        wget = wget.replace("/wget ", "")
+        await ctx.send('Attempting to download requested file...')
+        print(f"{ctx.author} is downloading a file...")
+        try:
+            subprocess.call(f"wget {wget}",shell=True)
+            print('Requested file has been downloaded successfully!')
+            await ctx.send('Requested file has been downloaded successfully!')
+        except:
+            print('There was an error while downloading the requested file...')
+            await ctx.send('There was an error while downloading the requested file...')
+    else:
+        await ctx.send('You are not one of the owners of this bot, if you think this is a mistake, please contact `Proxy (Ubuntu Addict)#0294` in the support server')
 
 @bot.command(name='server-list')
 async def server_list(ctx):
