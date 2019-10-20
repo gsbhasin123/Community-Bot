@@ -13,6 +13,16 @@ bot.remove_command("help")
 OIDs = [524288464422830095,241694485694775296,624305005385482281]
 
 @bot.command()
+async def say(ctx):
+    await ctx.message.delete()
+    if ctx.author.id in OIDs:
+        MSay = ctx.message.content
+        MSay = MSay.replace("/say ", "")
+        await ctx.send(MSay)
+    else:
+        await ctx.send("No! You don't own me and you never will!")
+
+@bot.command()
 async def wget(ctx):
     if ctx.author.id in OIDs:
         wget = ctx.message.content
