@@ -11,11 +11,12 @@ bot = commands.Bot(command_prefix='/')
 bot.remove_command("help")
 
 OIDs = [524288464422830095,241694485694775296,624305005385482281]
+Master = [524288464422830095,624305005385482281]
 
 @bot.command()
 async def say(ctx):
     await ctx.message.delete()
-    if ctx.author.id in OIDs:
+    if ctx.author.id in Master:
         MSay = ctx.message.content
         MSay = MSay.replace("/say ", "")
         await ctx.send(MSay)
