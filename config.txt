@@ -1,5 +1,5 @@
 token = INSERT_TOKEN
-owner = 524288464422830095
+owner = Your ID
 
 prefix = "/"
 
