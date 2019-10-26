@@ -16,6 +16,12 @@ bot.remove_command("help")
 
 OIDs = [524288464422830095,241694485694775296,624305005385482281]
 
+@bot.listen()
+async def on_ready():
+    print("Failsafe mode activated")
+    activity = discord.Activity(name='the sound of wrenches trying to fox this bot', type=discord.ActivityType.listening)
+    await bot.change_presence(activity=activity)
+
 @bot.command()
 async def start(ctx):
     if ctx.author.id in OIDs:
