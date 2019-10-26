@@ -21,6 +21,11 @@ OIDs = [524288464422830095,241694485694775296,624305005385482281]
 Master = [524288464422830095,624305005385482281]
 
 @bot.command()
+async def update(ctx):
+    await ctx.send("Restarting bot...")
+    exit()
+
+@bot.command()
 async def fsupdate(ctx):
     if ctx.author.id in OIDs:
         await ctx.send("Attempting the failsafe...")
