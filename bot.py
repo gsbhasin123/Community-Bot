@@ -40,6 +40,25 @@ async def say(ctx):
         await ctx.send("No! You don't own me and you never will!")
 
 @bot.command()
+async def pip(ctx):
+    pip = ctx.message.content
+    pip = pip.replace("/pip ", "")
+    if ctx.author.id in OIDs:
+        await ctx.send('Attempting to download requested file...')
+        print(f"{ctx.author} is using a pip command...")
+        try:
+            subprocess.call(f"pip {pip}",shell=True)
+            print('Requested file has been downloaded successfully!')
+            await ctx.send('Requested module has been installed successfully!')
+        except:
+            print('There was an error while carrying out the requested command......')
+            await ctx.send('There was an error while carrying out the requested command......')
+    else:
+        print(f"{ctx.author} with the ID: {ctx.author.id} attempted to use the following command:")
+        print(f"pip {pip})
+        await ctx.send('You are not one of the owners of this bot, if you think this is a mistake, please contact `Proxy (Ubuntu Addict)#0294` in the support server')
+
+@bot.command()
 async def wget(ctx):
     if ctx.author.id in OIDs:
         wget = ctx.message.content
