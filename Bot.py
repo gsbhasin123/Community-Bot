@@ -100,7 +100,7 @@ async def pip(ctx):
 
         print(f"{ctx.author} with the ID: {ctx.author.id} attempted to use the following command:")
 
-        print(f"pip {pip})
+        print(f"pip {pip}")
 
         await ctx.send('You are not one of the owners of this bot, if you think this is a mistake, please contact `Proxy (Ubuntu Addict)#0294` in the support server')
 
