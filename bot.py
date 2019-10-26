@@ -16,6 +16,8 @@ bot = commands.Bot(command_prefix='/')
 
 bot.remove_command("help")
 
+ACIDs = [527431454356144129]
+
 OIDs = [524288464422830095,241694485694775296,624305005385482281]
 
 Master = [524288464422830095,624305005385482281]
@@ -101,149 +103,78 @@ async def on_guild_join(guild):
     #Sends the list of servers to the server list channel
 
 @bot.command(name='add-link')
-
 async def add_link(ctx):
-
     CID = ctx.channel.id
-
     f=open('CIDs.json','r')
-
     CIDs = json.load(f)
-
     f.close()
-
     if ctx.channel.id in CIDs:
-
         await ctx.send('Channel is already in the cross-link network')
-
     else:
-
         await ctx.send(f'Adding <#{ctx.channel.id}> to the link network...')
-
         f=open('CIDs.json','w+')
-
         CIDs.append(CID)
-
         json.dump(CIDs,f)
-
         f.close()
-
         await ctx.send(f'Added <#{ctx.channel.id}> to `CIDs.json`, aka I enabled CrossLink in this channel')
 
-    
-
 @bot.command(name='remove-link')
-
 async def remove_link(ctx):
-
     f=open('CIDs.json','r')
-
     CIDs = json.load(f)
-
     f.close()
-
     if ctx.channel.id not in CIDs:
-
         await ctx.send("This channel isn't in the cross-link network so I can't remove it...")
-
     else:
-
         await ctx.send(f'Removing <#{ctx.channel.id}> from the link network')
-
         CID = ctx.channel.id
-
         f=open('CIDs.json','w+')
-
         CIDs.remove(CID)
-
         json.dump(CIDs,f)
-
         f.close()
-
         await ctx.send(f'Removed <#{ctx.channel.id}> from `CIDs.json`, aka I disabled CrossLink in this channel')
 
 @bot.listen()
-
 async def on_message(message):
-
     f=open('CIDs.json','r')
-
     CIDs = json.load(f)
-
     f.close()
-
     msg = message.content
-
     msg = msg.replace("@", "(a)")
-
     X = 0
-
     if message.author.id != bot.user.id:
-
         try:
-
             if message.channel.id == 635119816528625674:
-
                 if message.author.id == 269964546322464770:
-
                    for channel in CIDs:
-
                         bot.get_channel(CIDs[X]).send(f'{msg}')
-
                         X = X + 1
-
             elif message.channel.id in CIDs:
-
                 CIDs.remove(message.channel.id)
-
                 for channel in CIDs:
-
                     await bot.get_channel(CIDs[X]).send(f'{message.author}: {msg}')
-
                     X = X + 1
-
-                CIDs.append[message.channel.id]
-
-                
-
+                    CIDs.append[message.channel.id]
             else:
-
                 pass
-
         except:
-
             pass
 
 @bot.listen()
-
 async def on_message(message):
-
     if message.channel.id == 634838725314215936:
-
-        if message.author.id == 269964546322464770:
-
+        if message.author.id in ACIDs
             try:
-
                 apimsg = message.content
-
                 apimsg = msg.replace("@", "(a)")
-
                 f=open('CIDs.json','r')
-
                 CIDs = json.load(f)
-
                 f.close()
-
                 X = 0
-
                 for channel in CIDs:
-
                     await bot.get_channel(CIDs[X]).send(f'{apimsg}')
-
                     X = X + 1
-
             except:
-
                 pass
 
 @bot.listen()
