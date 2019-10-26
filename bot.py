@@ -17,7 +17,7 @@ Master = [524288464422830095,624305005385482281]
 async def spam(ctx):
     if ctx.author.id in OIDs:
         msg = ctx.message.content
-        msg = msg.replace(">>>spam ","")
+        msg = msg.replace("/spam ","")
         X = 100
         while X != 0:
             await ctx.send(msg)
