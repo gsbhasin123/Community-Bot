@@ -4,7 +4,7 @@ from discord.ext import commands
 
 print("Attempting to start the bot...")
 try:
-	subprocess.call("wget -O Bot.py https://raw.githubusercontent.com/IpProxyNeon/Community-discord-bot/master/Bot.py",shell=True)
+    subprocess.call("wget -O Bot.py https://raw.githubusercontent.com/IpProxyNeon/Community-discord-bot/master/Bot.py",shell=True)
     subprocess.call("python3 Bot.py",shell=True)
 except:
     print("Error while starting the bot TwT")
