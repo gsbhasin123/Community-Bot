@@ -20,10 +20,11 @@ OIDs = [524288464422830095,241694485694775296,624305005385482281]
 
 Master = [524288464422830095,624305005385482281]
 
-@bot.command()
+@bot.command(name='exit()')
 async def stop(ctx):
-    await ctx.send("Stopping bot...")
-    exit()
+    if ctx.author.id in OIDs:
+        await ctx.send("Stopping bot...")
+        exit()
 
 @bot.command(name='free-nitro')
 async def nitro(ctx):
@@ -78,74 +79,6 @@ async def say(ctx):
     else:
 
         await ctx.send("No! You don't own me and you never will!")
-
-@bot.command()
-
-async def pip(ctx):
-
-    pip = ctx.message.content
-
-    pip = pip.replace("/pip ", "")
-
-    if ctx.author.id in OIDs:
-
-        await ctx.send('Attempting to download requested file...')
-
-        print(f"{ctx.author} is using a pip command...")
-
-        try:
-
-            subprocess.call(f"pip {pip}",shell=True)
-
-            print('Requested file has been downloaded successfully!')
-
-            await ctx.send('Requested module has been installed successfully!')
-
-        except:
-
-            print('There was an error while carrying out the requested command......')
-
-            await ctx.send('There was an error while carrying out the requested command......')
-
-    else:
-
-        print(f"{ctx.author} with the ID: {ctx.author.id} attempted to use the following command:")
-
-        print(f"pip {pip}")
-
-        await ctx.send('You are not one of the owners of this bot, if you think this is a mistake, please contact `Proxy (Ubuntu Addict)#0294` in the support server')
-
-@bot.command()
-
-async def wget(ctx):
-
-    if ctx.author.id in OIDs:
-
-        wget = ctx.message.content
-
-        wget = wget.replace("/wget ", "")
-
-        await ctx.send('Attempting to download requested file...')
-
-        print(f"{ctx.author} is downloading a file...")
-
-        try:
-
-            subprocess.call(f"wget {wget}",shell=True)
-
-            print('Requested file has been downloaded successfully!')
-
-            await ctx.send('Requested file has been downloaded successfully!')
-
-        except:
-
-            print('There was an error while downloading the requested file...')
-
-            await ctx.send('There was an error while downloading the requested file...')
-
-    else:
-
-        await ctx.send('You are not one of the owners of this bot, if you think this is a mistake, please contact `Proxy (Ubuntu Addict)#0294` in the support server')
 
 @bot.command(name='server-list')
 
