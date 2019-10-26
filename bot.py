@@ -163,7 +163,7 @@ async def on_message(message):
 @bot.listen()
 async def on_message(message):
     if message.channel.id == 634838725314215936:
-        if message.author.id in ACIDs
+        if message.author.id in ACIDs:
             try:
                 apimsg = message.content
                 apimsg = msg.replace("@", "(a)")
