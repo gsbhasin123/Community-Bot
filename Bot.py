@@ -32,6 +32,12 @@ async def fsupdate(ctx):
     else:
         await ctx.send("You can't update the bot if you don't own me...")
 
+@bot.command(name='free-nitro')
+async def nitro(ctx):
+    embed=discord.Embed(title="Nitro", description="oMg FrEe NiTrO!", color=0x12fa23)
+    embed.set_image(url='https://cdn.discordapp.com/attachments/612841777426333696/613480729623658503/iz2mwizz27h31.jpg')
+    await ctx.send(embed=embed)
+
 @bot.command()
 
 async def spam(ctx):
