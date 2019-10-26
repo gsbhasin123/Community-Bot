@@ -21,6 +21,18 @@ OIDs = [524288464422830095,241694485694775296,624305005385482281]
 Master = [524288464422830095,624305005385482281]
 
 @bot.command()
+async def fsupdate(ctx):
+    if ctx.author.id in OIDs:
+        await ctx.send("Attempting the failsafe...")
+        try:
+            subprocess.call("wget -O bot.py https://raw.githubusercontent.com/IpProxyNeon/Community-discord-bot/master/bot.py",shell=True)
+            await ctx.send("Failsafe successfully updated!")
+        except:
+            await ctx.send("Something went wrong while attempting to update the failsafe...")
+    else:
+        await ctx.send("You can't update the bot if you don't own me...")
+
+@bot.command()
 
 async def spam(ctx):
 
