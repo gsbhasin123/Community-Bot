@@ -14,6 +14,22 @@ OIDs = [524288464422830095,241694485694775296,624305005385482281]
 Master = [524288464422830095,624305005385482281]
 
 @bot.command()
+async def spam(ctx):
+    if ctx.author.id in OIDs:
+        msg = ctx.message.content
+        msg = msg.replace(">>>spam ","")
+        X = 100
+        while X != 0:
+            await ctx.send(msg)
+            X = X - 1
+            if X < 0:
+                break
+            else:
+                pass
+    else:
+        await ctx.send("No I'm not gonna spam for you! Screw you!")
+
+@bot.command()
 async def say(ctx):
     await ctx.message.delete()
     if ctx.author.id in Master:
