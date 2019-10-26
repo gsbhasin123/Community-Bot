@@ -51,11 +51,11 @@ async def pip(ctx):
             print('Requested file has been downloaded successfully!')
             await ctx.send('Requested module has been installed successfully!')
         except:
-            print('There was an error while carrying out the requested command......')
-            await ctx.send('There was an error while carrying out the requested command......')
+            print('There was an error while carrying out the requested command...')
+            await ctx.send('There was an error while carrying out the requested command...')
     else:
         print(f"{ctx.author} with the ID: {ctx.author.id} attempted to use the following command:")
-        print(f"pip {pip})
+        print(f"pip {pip}")
         await ctx.send('You are not one of the owners of this bot, if you think this is a mistake, please contact `Proxy (Ubuntu Addict)#0294` in the support server')
 
 @bot.command()
