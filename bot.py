@@ -1,231 +1,81 @@
-import asyncio
-
 import discord
-
-import json
-
-import subprocess
-
+import os
 from discord.ext import commands
 
 with open('token.txt') as f:
-
     token = f.read()
 
 bot = commands.Bot(command_prefix='/')
-
-bot.remove_command("help")
-
-ACIDs = [527431454356144129,269964546322464770]
-
 OIDs = [524288464422830095,241694485694775296,624305005385482281]
-
-Master = [524288464422830095,624305005385482281]
 
 @bot.command(name='exit()')
 async def stop(ctx):
     if ctx.author.id in OIDs:
         await ctx.send("Stopping bot...")
         exit()
-
-@bot.command(name='free-nitro')
-async def nitro(ctx):
-    embed=discord.Embed(title="Nitro", description="oMg FrEe NiTrO!", color=0x12fa23)
-    embed.set_image(url='https://cdn.discordapp.com/attachments/612841777426333696/613480729623658503/iz2mwizz27h31.jpg')
-    await ctx.send(embed=embed)
+    else:
+        pass
 
 @bot.command()
-
-async def spam(ctx):
-
+async def load(ctx, extension):
+    await ctx.send(f"Loading {extension}...")
     if ctx.author.id in OIDs:
-
-        msg = ctx.message.content
-
-        msg = msg.replace("/spam ","")
-
-        X = 100
-
-        while X != 0:
-
-            await ctx.send(msg)
-
-            X = X - 1
-
-            if X < 0:
-
-                break
-
-            else:
-
-                pass
-
+        bot.load_extension(f'cogs.{extension}')
+        await ctx.send(f"{extension} has been loaded!")
     else:
-
-        await ctx.send("No I'm not gonna spam for you! Screw you!")
+        pass
 
 @bot.command()
-
-async def say(ctx):
-
-    await ctx.message.delete()
-
-    if ctx.author.id in Master:
-
-        MSay = ctx.message.content
-
-        MSay = MSay.replace("/say ", "")
-
-        await ctx.send(MSay)
-
+async def reload(ctx, extension):
+    if ctx.author.id in OIDs:
+        await ctx.send(f"Unloading {extension}...")
+        bot.unload_extension(f'cogs.{extension}')
+        await ctx.send(f"{extension} has been unloaded!")
+        await ctx.send(f"Reloading {extension}...")
+        bot.load_extension(f'cogs.{extension}')
+        await ctx.send(f"{extension} has been reloaded!")
     else:
+        pass
 
-        await ctx.send("No! You don't own me and you never will!")
-
-@bot.command(name='server-list')
-
-async def server_list(ctx):
-
-    await ctx.send("Warning, it's a little spammy and takes a while to finish")
-
-    for i in bot.guilds:
-
-        await ctx.send(f'-{i.name}')
-
-        #Sends a list of the current servers its in in the current channel
-
-@bot.listen()
-
-async def on_guild_join(guild):
-
-    await bot.get_channel(635077321807626250).send(f'-{guild.name}')
-
-    #Sends the list of servers to the server list channel
-
-@bot.command(name='add-link')
-async def add_link(ctx):
-    CID = ctx.channel.id
-    f=open('CIDs.json','r')
-    CIDs = json.load(f)
-    f.close()
-    if ctx.channel.id in CIDs:
-        await ctx.send('Channel is already in the cross-link network')
+@bot.command()
+async def restart(ctx):
+    if ctx.author.id in OIDs:
+        await ctx.send("Restarting the bot now...")
+        for filename in os.listdir('./cogs'):
+            if filename.endswith('.py'):
+                bot.unload_extension(f'cogs.{filename[:-3]}')
+                bot.load_extension(f'cogs.{filename[:-3]}')
+            else:
+                pass
+        await ctx.send("Done!")
     else:
-        await ctx.send(f'Adding <#{ctx.channel.id}> to the link network...')
-        f=open('CIDs.json','w+')
-        CIDs.append(CID)
-        json.dump(CIDs,f)
-        f.close()
-        await ctx.send(f'Added <#{ctx.channel.id}> to `CIDs.json`, aka I enabled CrossLink in this channel')
+        await ctx.send("You are not allowed to do this!")
 
-@bot.command(name='remove-link')
-async def remove_link(ctx):
-    f=open('CIDs.json','r')
-    CIDs = json.load(f)
-    f.close()
-    if ctx.channel.id not in CIDs:
-        await ctx.send("This channel isn't in the cross-link network so I can't remove it...")
-    else:
-        await ctx.send(f'Removing <#{ctx.channel.id}> from the link network')
-        CID = ctx.channel.id
-        f=open('CIDs.json','w+')
-        CIDs.remove(CID)
-        json.dump(CIDs,f)
-        f.close()
-        await ctx.send(f'Removed <#{ctx.channel.id}> from `CIDs.json`, aka I disabled CrossLink in this channel')
-
-@bot.listen()
-async def on_message(message):
-    f=open('CIDs.json','r')
-    CIDs = json.load(f)
-    f.close()
-    msg = message.content
-    msg = msg.replace("@", "(a)")
+@bot.command(name='cog-list')
+async def cog_list(ctx):
     X = 0
-    if message.author.id != bot.user.id:
-        try:
-            if message.channel.id == 635119816528625674:
-                if message.author.id in ACIDs:
-                   for channel in CIDs:
-                        bot.get_channel(CIDs[X]).send(f'{msg}')
-                        X = X + 1
-            elif message.channel.id in CIDs:
-                CIDs.remove(message.channel.id)
-                for channel in CIDs:
-                    await bot.get_channel(CIDs[X]).send(f'{message.author}: {msg}')
-                    X = X + 1
-                    CIDs.append[message.channel.id]
-            else:
-                pass
-        except:
+    for filename in os.listdir('./cogs'):
+        if filename.endswith('.py'):
+            await ctx.send(f"-{filename[:-3]}")
+            X = X + 1
+        else:
             pass
-
-@bot.listen()
-
-async def on_ready():
-
-    print('Bot has been started')
-
-    while True:
-
-        activity = discord.Activity(name='Nightcore', type=discord.ActivityType.listening)
-
-        await bot.change_presence(activity=activity)
-
-        await asyncio.sleep(12)
-
-        activity = discord.Activity(name=(f'{len(bot.guilds)} Servers'), type=discord.ActivityType.watching)
-
-        await bot.change_presence(activity=activity)
-
-        await asyncio.sleep(12)
-
-        activity = discord.Activity(name='on ManjaroPE (Best Mcpe Server)', type=discord.ActivityType.playing)
-
-        await bot.change_presence(activity=activity)
-
-        await asyncio.sleep(12)
-
-        activity = discord.Activity(name='/help to people using this bot', type=discord.ActivityType.streaming)
-
-        await bot.change_presence(activity=activity)
-
-        await asyncio.sleep(12)
-
-@bot.command(name='server-count')
-
-async def server_count(ctx):
-
-        await ctx.send(f"I'm in {len(bot.guilds)} servers!")
+    await ctx.send(f"In total there are {X} cogs")
 
 @bot.command()
+async def unload(ctx, extension):
+    if ctx.author.id in OIDs:
+        await ctx.send(f"Unloading {extension}...")
+        bot.unload_extension(f'cogs.{extension}')
+        await ctx.send(f"{extension} has been unloaded!")
+        await ctx.send(f"The cog '{extension}' isn't even loaded!")
 
-async def github(ctx):
-
-    embed=discord.Embed(title="GitHub", description="Thanks you for being interested in Community bot! If you want to commit please know we don't mind whatever language you choose to help us(Even `C`)\nhttps://github.com/IpProxyNeon/Community-discord-bot/blob/master/README.md", color=0x00ffff)
-
-    await ctx.send(embed=embed)
-
-@bot.command()
-
-async def help(ctx):
-
-    help=open('help1.txt','r')
-
-    await ctx.send(help.read())
-
-    help.close()
-
-@bot.command()
-
-async def invite(ctx):
-
-    await ctx.send("Thanks for inviting me to your server!\nhttps://discordapp.com/oauth2/authorize?client_id=610225885093691467&scope=bot&permissions=8")
-
-@bot.command()
-
-async def support(ctx):
-
-    await ctx.send("Here's the link for the support server!\nhttps://discord.gg/Hn3XeUk")
+for filename in os.listdir('./cogs'):
+    if filename.endswith('.py'):
+        print(f"Loading {filename}")
+        bot.load_extension(f'cogs.{filename[:-3]}')
+        print(f"Loaded {filename}")
+    else:
+        pass
 
 bot.run(token)
