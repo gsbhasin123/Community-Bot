@@ -31,13 +31,5 @@ class master(commands.Cog):
         else:
             await ctx.send("No I'm not gonna spam for you! Screw you!")
 
-    @commands.Cog.listener()
-    async def on_command_error(self, ctx, error):
-        if isinstance(error,commands.CommandNotFound):
-            pass
-        else:
-            print(error)
-            await ctx.send(error)
-
 def setup(bot):
     bot.add_cog(master(bot))
