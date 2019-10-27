@@ -11,13 +11,5 @@ class basic(commands.Cog):
     async def on_ready(self):
         print(f"Bot has logged in as {self.bot.user}")
 
-    @commands.Cog.listener()
-    async def on_command_error(self, ctx, error):
-        if isinstance(error,commands.CommandNotFound):
-            pass
-        else:
-            print(error)
-            await ctx.send(error)
-
 def setup(bot):
     bot.add_cog(basic(bot))
