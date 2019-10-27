@@ -145,7 +145,7 @@ async def on_message(message):
     if message.author.id != bot.user.id:
         try:
             if message.channel.id == 635119816528625674:
-                if message.author.id == 269964546322464770:
+                if message.author.id in ACIDs:
                    for channel in CIDs:
                         bot.get_channel(CIDs[X]).send(f'{msg}')
                         X = X + 1
@@ -159,23 +159,6 @@ async def on_message(message):
                 pass
         except:
             pass
-
-@bot.listen()
-async def on_message(message):
-    if message.channel.id == 634838725314215936:
-        if message.author.id in ACIDs:
-            try:
-                apimsg = message.content
-                apimsg = msg.replace("@", "(a)")
-                f=open('CIDs.json','r')
-                CIDs = json.load(f)
-                f.close()
-                X = 0
-                for channel in CIDs:
-                    await bot.get_channel(CIDs[X]).send(f'{apimsg}')
-                    X = X + 1
-            except:
-                pass
 
 @bot.listen()
 
