@@ -59,15 +59,6 @@ class crosslink(commands.Cog):
                 if not message.channel.id == channel:
                     await self.bot.get_channel(int(channel)).send(message.content.replace("@","(a)"))
 
-    @commands.Cog.listener()
-    async def on_command_error(self, ctx, error):
-        if isinstance(error,commands.CommandNotFound):
-            pass
-        else:
-            print(error)
-            await ctx.send(error)
-
-
 def setup(bot):
     bot.add_cog(crosslink(bot))
 
