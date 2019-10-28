@@ -2,6 +2,7 @@ import json
 import asyncio
 import discord
 import os
+import subprocess
 from discord.ext import commands
 
 with open('token.txt') as f:
@@ -9,6 +10,9 @@ with open('token.txt') as f:
 
 client = commands.Bot(command_prefix='/')
 bot = commands.Bot(command_prefix='/')
+#Both of these are needed so mine and AUser's
+#cogs work on eachother's bot as he uses 'client' and
+#I use 'bot'
 
 DoNotLoad = [
     "system.py"
@@ -37,6 +41,30 @@ async def on_ready():
         activity = discord.Activity(name='/help to people using this bot', type=discord.ActivityType.streaming)
         await bot.change_presence(activity=activity)
         await asyncio.sleep(12)
+
+@bot.command(name='add-cog')
+async def cog_get(ctx,CogName,CogLink):
+    if ctx.author.id in OIDs:
+        CogName = CogName.replace(".py",'')
+        await ctx.send(f"Installing {CogName}...")
+        print(f"{ctx.author} is downloading the cog called {CogName}, with the link: {CogLink}")
+        subprocess.call(f"cd cogs && wget -O {CogName}.py {CogLink}",shell=True)
+        await ctx.send(f"{CogName} has successfully been installed")
+        await ctx.send("Loading cog...")
+        bot.load_extension(f'cogs.{CogName}')
+        await ctx.send(f"The cog {CogName} has successfully been loaded!")
+
+@bot.command(name='remove-cog')
+async def cog_remove(ctx,CogName):
+    if ctx.author.id in OIDs:
+        await ctx.send("Unloading cog...")
+        bot.unload_extension(f'cogs.{CogName}')
+        await ctx.send(f"The cog {CogName} has successfully been unloaded!")
+        CogName = CogName.replace(".py",'')
+        await ctx.send(f"removing {CogName}...")
+        print(f"{ctx.author} is deleting the cog called {CogName}")
+        subprocess.call(f"cd cogs && rm {CogName}.py",shell=True)
+        await ctx.send(f"{CogName} has successfully been deleted")
 
 @bot.command()
 async def load(ctx, extension):
