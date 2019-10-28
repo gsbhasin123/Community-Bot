@@ -43,7 +43,7 @@ async def on_ready():
         await asyncio.sleep(12)
 
 @bot.command(name='add-cog')
-async def cog_get(ctx,CogName,CogLink):
+async def cog_add(ctx,CogName,CogLink):
     if ctx.author.id in OIDs:
         CogName = CogName.replace(".py",'')
         await ctx.send(f"Installing {CogName}...")
@@ -53,6 +53,19 @@ async def cog_get(ctx,CogName,CogLink):
         await ctx.send("Loading cog...")
         bot.load_extension(f'cogs.{CogName}')
         await ctx.send(f"The cog {CogName} has successfully been loaded!")
+
+@bot.command(name='update-cog')
+async def cog_update(ctx,CogName,CogLink):
+    if ctx.author.id in OIDs:
+        CogName = CogName.replace(".py",'')
+        await ctx.send(f"Updating {CogName}...")
+        print(f"{ctx.author} is updating the cog called {CogName}, with the link: {CogLink}")
+        subprocess.call(f"cd cogs && wget -O {CogName}.py {CogLink}",shell=True)
+        await ctx.send(f"{CogName} has successfully been updating")
+        await ctx.send("Reloading cog...")
+        bot.unload_extension(f'cogs.{CogName}')
+        bot.load_extension(f'cogs.{CogName}')
+        await ctx.send(f"The cog {CogName} has successfully been reloaded!")
 
 @bot.command(name='remove-cog')
 async def cog_remove(ctx,CogName):
@@ -109,21 +122,9 @@ async def restart(ctx):
             else:
                 pass
         await ctx.send("Done!")
+        bot.unload_extension('cogs.system')
     else:
         await ctx.send("You are not allowed to do this!")
-
-@bot.command(name='cog-list')
-async def cog_list(ctx):
-    X = 0
-    for filename in os.listdir('./cogs'):
-        if filename == "lists.py":
-            pass
-        elif filename.endswith('.py'):
-            await ctx.send(f"-{filename[:-3]}")
-            X = X + 1
-        else:
-            pass
-    await ctx.send(f"In total there are {X} cogs (Some may be disabled e.g system might be disabled for the bot host's safety)")
 
 @bot.command()
 async def unload(ctx, extension):
