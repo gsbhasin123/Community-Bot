@@ -1,10 +1,12 @@
 import asyncio
 import discord
+import json
 import subprocess
 from discord.ext import commands
 
-OIDs = [524288464422830095, 241694485694775296, 624305005385482281, 401430005055488011]
-
+f=open('OIDs.json','r+')
+OIDs = json.load(f)
+f.close()
 
 class System(commands.Cog):
     def __init__(self, bot):
@@ -60,7 +62,6 @@ class System(commands.Cog):
                 await ctx.send(output)
         else:
             await ctx.send("You do not have permission to use that command")
-
 
 def setup(bot):
     bot.add_cog(System(bot))

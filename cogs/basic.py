@@ -26,11 +26,6 @@ class Basic(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command()
-    async def temphelp(self, ctx):
-        with open("help.txt") as file:
-            await ctx.send(help.read())
-
-    @commands.command()
     async def invite(self, ctx):
         await ctx.send(
             f"Thanks for inviting me to your server!\nhttps://discordapp.com/oauth2/authorize?client_id={(await ctx.bot.application_info()).id}&scope=bot&permissions=8"

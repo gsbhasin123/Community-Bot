@@ -20,13 +20,13 @@ class ServerList(commands.Cog):
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
         await bot.get_channel(CENTRAL_CHANNEL).send(
-            f'- "{guild.name}" has joined the Bot!'
+            f'- "{guild.name}" has added the bot!'
         )
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild):
         await bot.get_channel(CENTRAL_CHANNEL).send(
-            f'- "{guild.name}" has left the Bot!'
+            f'- "{guild.name}" has removed the bot...'
         )
 
 

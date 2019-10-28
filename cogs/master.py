@@ -1,9 +1,11 @@
+import json
 import asyncio
 import discord
 from discord.ext import commands
 
-masters = [524288464422830095, 624305005385482281]
-
+f=open('masters.json','r+')
+masters = json.load(f)
+f.close()
 
 class Master(commands.Cog):
     def __init__(self, bot):
