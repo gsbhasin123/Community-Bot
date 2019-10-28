@@ -1,3 +1,4 @@
+import json
 import asyncio
 import discord
 import os
@@ -6,13 +7,20 @@ from discord.ext import commands
 with open('token.txt') as f:
     token = f.read()
 
+client = commands.Bot(command_prefix='/')
 bot = commands.Bot(command_prefix='/')
-OIDs = [
-    524288464422830095,
-    241694485694775296,
-    624305005385482281,
-    401430005055488011
-]
+
+DoNotLoad = [
+    "system.py"
+    ]
+
+f=open("banned-commands.json","r")
+BannedCommands = f.read()
+f.close()
+
+f=open('OIDs.json','r+')
+OIDs = json.load(f)
+f.close()
 
 @bot.listen()
 async def on_ready():
@@ -65,16 +73,14 @@ async def restart(ctx):
             pass
         await ctx.send("Restarting the bot now...")
         for filename in os.listdir('./cogs'):
-            if filename.endswith('.py'):
+            if filename in DoNotLoad:
+                pass
+            elif filename.endswith('.py'):
                 bot.unload_extension(f'cogs.{filename[:-3]}')
                 bot.load_extension(f'cogs.{filename[:-3]}')
             else:
                 pass
         await ctx.send("Done!")
-        try:
-            bot.unload_extension('cogs.system')
-        except:
-            pass
     else:
         await ctx.send("You are not allowed to do this!")
 
@@ -82,7 +88,9 @@ async def restart(ctx):
 async def cog_list(ctx):
     X = 0
     for filename in os.listdir('./cogs'):
-        if filename.endswith('.py'):
+        if filename == "lists.py":
+            pass
+        elif filename.endswith('.py'):
             await ctx.send(f"-{filename[:-3]}")
             X = X + 1
         else:
@@ -99,13 +107,10 @@ async def unload(ctx, extension):
         pass
 
 for filename in os.listdir('./cogs'):
-    if filename.endswith('.py'):
-        bot.load_extension(f'cogs.{filename[:-3]}')
-    try:
-        bot.unload_extension('cogs.system')
-        print("Unloaded system.py")
-    except:
+    if filename in DoNotLoad:
         pass
+    elif filename.endswith('.py'):
+        bot.load_extension(f'cogs.{filename[:-3]}')
     else:
         pass
 
