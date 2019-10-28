@@ -10,10 +10,9 @@ You can check out the bot by joining [this Discord Server](https://discord.gg/zF
 You can use any programming language but preferably NodeJS or Python as I use Python the most, and I can understand NodeJS a bit, but any language is fine (Even C)! 
 
 ## Note
-People who want to run an instance of this bot, if you are using a Linux system, you are able to use the 'system' cog, windows can not as of yet, but Proxy is working on that
+People who want to run an instance of this bot, if you are using a Linux system, you are able to use the 'system' cog
+Windows users, please use the `shell`, and make sure you use windows 10, otherwise some commands from the `system` cog might not work
 Contributors, please put your name by the feature you have added, It would be easier to contact the creator for a certain command if it breaks ToS or something, Also make sure you join the community discord so you can help people
-
-
 
 ## Acknowledgements
 **DJ0RDJ3#3296** - The actual host for the bot (Da best person ever!)
