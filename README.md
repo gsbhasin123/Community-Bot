@@ -1,9 +1,9 @@
 # About Community bot
-A discord bot that anyone can modify and commit to! I want it to be as Opensource as possible, so feel free to work on any feature you like!
+A discord bot that anyone can modify and commit to! I want it to be as open-source as possible, so feel free to work on any feature you like!
 
 ## Features
 You can invite the bot to your server by clicking [here](https://discordapp.com/oauth2/authorize?client_id=610225885093691467&scope=bot&permissions=8).
-A feature list is available in the [help file](https://github.com/IpProxyNeon/Community-discord-bot/blob/master/help1.txt)!
+A feature list is available in the [help file](https://github.com/IpProxyNeon/Community-discord-bot/blob/master/help.txt)!
 You can check out the bot by joining [this Discord Server](https://discord.gg/zF8z7ar) too!
 
 ## Programming languages
