@@ -2,12 +2,15 @@ import asyncio
 import discord
 from discord.ext import commands
 
-Master = [524288464422830095,624305005385482281]
+masters = [
+    524288464422830095,
+    624305005385482281
+]
 
-class master(commands.Cog):
+class Master(commands.Cog):
     def __init__(self,bot):
         self.bot = bot
-        print("'master' Cog has been loaded!")
+        print("'Master' Cog has been loaded!")
 
     @commands.command()
     async def say(self, ctx, *, msg):
@@ -32,4 +35,4 @@ class master(commands.Cog):
             await ctx.send("No I'm not gonna spam for you! Screw you!")
 
 def setup(bot):
-    bot.add_cog(master(bot))
+    bot.add_cog(Master(bot))

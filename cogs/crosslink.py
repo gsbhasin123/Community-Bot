@@ -3,26 +3,23 @@ import discord
 import json
 from discord.ext import commands
 
-class crosslink(commands.Cog):
+class CrossLink(commands.Cog):
     def __init__(self,bot):
         self.bot = bot
-        print("'crosslink' Cog has been loaded!")
+        print("'CrossLink' Cog has been loaded!")
 
     @commands.command(name='add-link')
-    async def add_link(self,ctx):
-        CID = ctx.channel.id
-        f=open('CIDs.json','r')
-        CIDs = json.load(f)
-        f.close()
-        if ctx.channel.id in CIDs:
-            await ctx.send('Channel is already in the cross-link network')
-        else:
-            await ctx.send(f'Adding <#{ctx.channel.id}> to the link network...')
-            f=open('CIDs.json','w+')
-            CIDs.append(CID)
-            json.dump(CIDs,f)
-            f.close()
-            await ctx.send(f'Added <#{ctx.channel.id}> to `CIDs.json`, aka I enabled CrossLink in this channel')
+    async def add_link(self, ctx):
+        channel_id = ctx.channel.id
+        with open('crosslink-ids', 'r') as file:
+            crosslink_ids = json.load(file)
+            if ctx.channel.id in crosslink_ids:
+                await ctx.send('Channel is already in the cross-link network')
+            else:
+                await ctx.send(f'Adding <#{channel_id}> to the link network...')
+                crosslink_ids.append(crosslink_ids)
+                json.dump(crosslink_ids, file)
+                await ctx.send(f'Added <#{channel_id}> to `CIDs.json`, aka I enabled CrossLink in this channel')
 
     @commands.command(name='remove-link')
     async def remove_link(self,ctx):
@@ -60,5 +57,5 @@ class crosslink(commands.Cog):
                     await self.bot.get_channel(int(channel)).send(message.content.replace("@","(a)"))
 
 def setup(bot):
-    bot.add_cog(crosslink(bot))
+    bot.add_cog(CrossLink(bot))
 

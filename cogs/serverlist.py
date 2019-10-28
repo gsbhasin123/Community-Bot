@@ -2,7 +2,9 @@ import asyncio
 import discord
 from discord.ext import commands
 
-class serverlist(commands.Cog):
+CENTRAL_CHANNEL = 635077321807626250
+
+class ServerList(commands.Cog):
     def __init__(self,bot):
         self.bot = bot
         print("'serverlist' Cog has been loaded!")
@@ -16,9 +18,9 @@ class serverlist(commands.Cog):
 
     @commands.Cog.listener()
     async def on_guild_join(self,guild):
-        await bot.get_channel(635077321807626250).send(f'-{guild.name}')
+        await bot.get_channel(CENTRAL_CHANNEL).send(f'-{guild.name}')
 
         #Sends the list of servers to the server list channel
 
 def setup(bot):
-    bot.add_cog(serverlist(bot))
+    bot.add_cog(ServerList(bot))

@@ -2,10 +2,10 @@ import asyncio
 import discord
 from discord.ext import commands
 
-class basic(commands.Cog):
+class Basic(commands.Cog):
     def __init__(self,bot):
         self.bot = bot
-        print("'basic' Cog has been loaded!")
+        print("'Basic' Cog has been loaded!")
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -17,14 +17,13 @@ class basic(commands.Cog):
 
     @commands.command()
     async def github(self,ctx):
-        embed=discord.Embed(title="GitHub", description="Thanks you for being interested in Community bot! If you want to commit please know we don't mind whatever language you choose to help us(Even `C`)\nhttps://github.com/IpProxyNeon/Community-discord-bot/blob/master/README.md", color=0x00ffff)
+        embed = discord.Embed(title="GitHub", description="Thanks you for being interested in Community bot! If you want to commit please know we don't mind whatever language you choose to help us(Even `C`)\nhttps://github.com/IpProxyNeon/Community-discord-bot/blob/master/README.md", color=0x00ffff)
         await ctx.send(embed=embed)
 
     @commands.command()
     async def temphelp(self,ctx):
-        help=open('help1.txt','r')
-        await ctx.send(help.read())
-        help.close()
+        with open('help.txt') as file:
+            await ctx.send(help.read())
 
     @commands.command()
     async def invite(self,ctx):
@@ -35,4 +34,4 @@ class basic(commands.Cog):
         await ctx.send("Here's the link for the support server!\nhttps://discord.gg/Hn3XeUk")
 
 def setup(bot):
-    bot.add_cog(basic(bot))
+    bot.add_cog(Basic(bot))

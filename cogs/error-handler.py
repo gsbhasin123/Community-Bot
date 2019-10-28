@@ -3,7 +3,7 @@ import discord
 import json
 from discord.ext import commands
 
-class errorhandler(commands.Cog):
+class ErrorHandler(commands.Cog):
     def __init__(self,bot):
         self.bot = bot
         print("'Error Handler' Cog has been loaded!")
@@ -17,4 +17,4 @@ class errorhandler(commands.Cog):
             await ctx.send(error)
 
 def setup(bot):
-    bot.add_cog(errorhandler(bot))
+    bot.add_cog(ErrorHandler(bot))
