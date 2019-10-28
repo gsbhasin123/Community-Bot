@@ -17,8 +17,8 @@ class Basic(commands.Cog):
 
     @commands.command()
     async def github(self,ctx):
-        embed = discord.Embed(title="GitHub", description="Thanks you for being interested in Community bot! If you want to commit please know we don't mind whatever language you choose to help us(Even `C`)\nhttps://github.com/IpProxyNeon/Community-discord-bot/blob/master/README.md", color=0x00ffff)
-        await ctx.send(embed=embed)
+            embed = discord.Embed(title="GitHub", description="Thanks you for being interested in Community bot! If you want to commit please know we don't mind whatever language you choose to help us(Even `C`)\nhttps://github.com/IpProxyNeon/Community-discord-bot/blob/master/README.md", color=0x00ffff)
+            await ctx.send(embed=embed)
 
     @commands.command()
     async def temphelp(self,ctx):
@@ -27,7 +27,7 @@ class Basic(commands.Cog):
 
     @commands.command()
     async def invite(self,ctx):
-        await ctx.send("Thanks for inviting me to your server!\nhttps://discordapp.com/oauth2/authorize?client_id=610225885093691467&scope=bot&permissions=8")
+        await ctx.send(f"Thanks for inviting me to your server!\nhttps://discordapp.com/oauth2/authorize?client_id={(await ctx.bot.application_info()).id}&scope=bot&permissions=8")
 
     @commands.command()
     async def support(self,ctx):
