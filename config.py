@@ -75,7 +75,31 @@ OIDS_PATH = os.path.join(CONFIG_PATH, 'o-ids.json')
 SPIDS_PATH = os.path.join(CONFIG_PATH, 'sp-ids.json')
 
 # Classes for easily creating objects perfect for managing config files
-class BasicFileManager(object):
+class BasicConfigManager(object):
     def __init__(self, full_path):
         self.full_path = full_path
-        with open(path, )
+        with open(self.full_path) as fp:
+            self.data = json.load(fp)
+
+    # Completely refresh from the current file on the system
+    # Will erase and unsaved information in the data variable
+    def reload(self):
+        with open(self.full_path, 'r') as fp:
+            self.data = json.load()
+
+        
+    
+    # Dumps contents of manager to file.
+    def dump(self):
+        with open(self.full_path, 'w') as fp:
+            json.dump(self.data, fp)
+
+    # Saves file contents, then reloads them back
+    def refresh(self):
+        self.dump()
+        self.reload()
+
+
+class NumericalIDManager(BasicConfigManager):
+    def __init__(self, full_path):
+        super().__init__(full_path)
