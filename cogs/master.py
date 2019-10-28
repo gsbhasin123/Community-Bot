@@ -2,16 +2,17 @@ import asyncio
 import discord
 from discord.ext import commands
 
-Master = [524288464422830095,624305005385482281]
+masters = [524288464422830095, 624305005385482281]
 
-class master(commands.Cog):
-    def __init__(self,bot):
+
+class Master(commands.Cog):
+    def __init__(self, bot):
         self.bot = bot
-        print("'master' Cog has been loaded!")
+        print("'Master' Cog has been loaded!")
 
     @commands.command()
     async def say(self, ctx, *, msg):
-        if ctx.author.id in Master:
+        if ctx.author.id in masters:
             await ctx.message.delete()
             await ctx.send(msg)
         else:
@@ -19,10 +20,10 @@ class master(commands.Cog):
 
     @commands.command()
     async def spam(self, ctx, *, msg):
-        if ctx.author.id in Master:
-            for s in range(0,100):
-                if ctx.author.id in Master:
-                    if ctx.message.content == 'stop':
+        if ctx.author.id in masters:
+            for s in range(0, 100):
+                if ctx.author.id in masters:
+                    if ctx.message.content == "stop":
                         break
                     else:
                         await ctx.send(msg)
@@ -31,5 +32,6 @@ class master(commands.Cog):
         else:
             await ctx.send("No I'm not gonna spam for you! Screw you!")
 
+
 def setup(bot):
-    bot.add_cog(master(bot))
+    bot.add_cog(Master(bot))

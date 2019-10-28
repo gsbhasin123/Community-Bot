@@ -1,3 +1,4 @@
+import asyncio
 import discord
 import os
 from discord.ext import commands
@@ -6,7 +7,12 @@ with open('token.txt') as f:
     token = f.read()
 
 bot = commands.Bot(command_prefix='/')
-OIDs = [524288464422830095,241694485694775296,624305005385482281,401430005055488011]
+OIDs = [
+    524288464422830095,
+    241694485694775296,
+    624305005385482281,
+    401430005055488011
+]
 
 @bot.listen()
 async def on_ready():
@@ -94,9 +100,7 @@ async def unload(ctx, extension):
 
 for filename in os.listdir('./cogs'):
     if filename.endswith('.py'):
-        print(f"Loading {filename}")
         bot.load_extension(f'cogs.{filename[:-3]}')
-        print(f"Loaded {filename}")
     try:
         bot.unload_extension('cogs.system')
         print("Unloaded system.py")
