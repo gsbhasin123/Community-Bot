@@ -11,7 +11,12 @@ class help(commands.Cog):
     @commands.command()
     async def temphelp(self, ctx):
         help=open("help.txt","r")
-        await ctx.send(help.read())
+        embed = discord.Embed(
+        title="Cog-list",
+        description=f"{help.read()}",
+        color=0x21FFAF,
+        )
+        await ctx.send(embed=embed)
         help.close
 
 def setup(bot):
