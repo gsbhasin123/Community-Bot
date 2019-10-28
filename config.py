@@ -170,6 +170,9 @@ class IDManager(BasicConfigManager):
                     raise IDNotPresentError(value)
             else:
                 self.data.remove(value)
+    
+    def contains(self, value):
+        return value in self.data
 
 logging.info('Initializing Config Managers')
 TOKEN = BasicConfigManager(TOKEN_PATH, 'Token', 'Token Manager')
