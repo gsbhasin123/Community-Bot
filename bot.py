@@ -3,6 +3,7 @@ import asyncio
 import discord
 import os
 import subprocess
+import config
 from discord.ext import commands
 
 with open('token.txt') as f:
