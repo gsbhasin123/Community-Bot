@@ -14,7 +14,7 @@ class Master(commands.Cog):
 
     @commands.command()
     async def say(self, ctx, *, msg):
-        if ctx.author.id in Master:
+        if ctx.author.id in masters:
             await ctx.message.delete()
             await ctx.send(msg)
         else:
@@ -22,9 +22,9 @@ class Master(commands.Cog):
 
     @commands.command()
     async def spam(self, ctx, *, msg):
-        if ctx.author.id in Master:
+        if ctx.author.id in masters:
             for s in range(0,100):
-                if ctx.author.id in Master:
+                if ctx.author.id in masters:
                     if ctx.message.content == 'stop':
                         break
                     else:
