@@ -76,8 +76,10 @@ SPIDS_PATH = os.path.join(CONFIG_PATH, 'sp-ids.json')
 
 # Classes for easily creating objects perfect for managing config files
 class BasicConfigManager(object):
-    def __init__(self, full_path):
+    def __init__(self, full_path, config_name='Configuration', config_type='Type'):
         self.full_path = full_path
+        self.config_name = config_name
+        self.config_type = config_type
         with open(self.full_path) as fp:
             self.data = json.load(fp)
 
@@ -99,7 +101,70 @@ class BasicConfigManager(object):
         self.dump()
         self.reload()
 
+# Exceptions you can use to detect use with 'except' when using NumericalIDManager
+class IDAlreadyPresentError(Exception):
+    def __init__(self, value, message="Value '{}' was already present."):
+        self.value = value
+        self.message = message.format(self.value)
 
+class IDNotPresentError(Exception):
+    def __init__(self, value, message="Value '{}' was not present."):
+        self.value = value
+        self.message = message.format(self.value)
+
+# ID based manager with functions tailored to working with IDs, whether they be 
 class NumericalIDManager(BasicConfigManager):
-    def __init__(self, full_path):
+    def __init__(self, full_path, config_name, config_type):
         super().__init__(full_path)
+
+    # Decorator that simply runs self.dump() after executing the function
+    # Maintains that the file on the machine is ALWAYS up to date.
+    def quickdump(func):
+        def wrapper(self, *args, **kwargs):
+            func(*args, **kwargs)
+            self.dump()
+        return wrapper
+
+    # skip_duplicates
+    # True => Will not raise IDAlreadyPresentError when duplicate(s) are found in data
+    # False => Will raise IDAlreadyPresentError when duplicate(s) are found in data
+
+    # skip_absents
+    # True => Will not raise IDNotPResentError when ID cannot be found in data
+    # False => Will rise IDNotPresentError when ID was not found in data
+
+    # Add a single id
+    @quickdump
+    def add_id(self, value, skip_duplicates=False):
+        if value in self.data:
+            if not skip_duplicates:
+                raise IDAlreadyPresentError(value)
+        else:
+            self.data.append(value)
+            
+    # Add one or more ids from a iterator (list, set, iter...)
+    @quickdump
+    def add_ids(self, values, skip_duplicates=False):
+        for value in values:
+            if not skip_duplicates and value in self.data:
+                raise IDAlreadyPresentError(value)
+        self.data.extend(list(values))
+    
+    # Remove a single id
+    @quickdump
+    def remove_id(self, value, skip_absents=False):
+        if value not in self.data:
+            if not skip_absents:
+                raise IDNotPresentError(value)
+        else:
+            self.data.remove(value)
+    
+    # Remove one or more ids from a iterator (list, set, iter...)
+    @quickdump
+    def remove_ids(self, values, skip_absents=False):
+        for value in values:
+            if value not in self.data:
+                if skip_absents:
+                    raise IDNotPresentError(value)
+            else:
+                self.data.remove(value)
