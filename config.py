@@ -103,7 +103,7 @@ class BasicConfigManager(object):
         self.dump()
         self.reload()
 
-# Exceptions you can use to detect use with 'except' when using NumericalIDManager
+# Exceptions you can use to detect use with 'except' when using IDManager
 class IDAlreadyPresentError(Exception):
     def __init__(self, value, message="Value '{}' was already present."):
         self.value = value
@@ -115,7 +115,7 @@ class IDNotPresentError(Exception):
         self.message = message.format(self.value)
 
 # ID based manager with functions tailored to working with IDs, whether they be 
-class NumericalIDManager(BasicConfigManager):
+class IDManager(BasicConfigManager):
     def __init__(self, full_path, config_name, config_type):
         super().__init__(full_path)
 
@@ -170,3 +170,12 @@ class NumericalIDManager(BasicConfigManager):
                     raise IDNotPresentError(value)
             else:
                 self.data.remove(value)
+
+logging.info('Initializing Config Managers')
+TOKEN = BasicConfigManager(TOKEN_PATH, 'Token', 'Token Manager')
+BANNED_COMMANDS = IDManager(BANNED_COMMANDS_PATH, 'Banned Commands', 'Banned Commands Manager')
+CROSSLINK_IDS = IDManager(CROSSLINK_IDS_PATH, 'CrossLink IDs', 'CrossLink IDs Manager')
+MASTERS = IDManager(MASTERS_PATH, 'Master IDs', 'Master IDs Manager')
+OIDS = IDManager(OIDS_PATH, 'OIDs', 'OIDs Manager')
+SPIDS = IDManager(SPIDS_PATH, 'SPIDs', 'SPIDs Manager')
+logging.info('Initialized Config Managers')
