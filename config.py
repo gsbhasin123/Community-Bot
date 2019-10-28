@@ -22,6 +22,7 @@ ALL_SAME_TYPE = lambda array, item_type : all(type(item) is item_type for item i
 ROOT = sys.path[0]
 CONFIG_PATH = os.path.join(ROOT, 'config')
 AVAILABLE_CONFIGURATION_FILES = os.listdir(CONFIG_PATH)
+ERRONEOUS_FILES = []
 logging.basicConfig(level=logging.INFO)
 
 # Start validating all required files
@@ -34,11 +35,13 @@ for file in FILES.keys():
                 fp = json.load(fp)
             except OSError:
                 logging.critical(f'Configuration file \'{file}\' could not be opened. Please close any programs that may be preventing access to the file.')
-                break
+                ERRONEOUS_FILES.append(file)
+                continue
             except json.JSONDecodeError: # Incorrect JSON syntax possibly 
                 logging.critical(f'Configuration file \'{file}\' could not be deserialized.')
                 logging.critical(f'Please check that the configuration file\'s syntax is intact.')
-                break
+                ERRONEOUS_FILES.append(file)
+                continue
             # Validate that the file is what we want out of the file
             if FILES[file][0] is not None: # if a type was given
                 check_func = functools.partial(ALL_SAME_TYPE, item_type=FILES[file][0]) # create the checking func with the type we want
@@ -59,3 +62,20 @@ for file in FILES.keys():
         # Close with
         logging.debug(f'Successfully wrote configuration file at \'{shortpath}\'')
         logging.info(f'Configuration file will be read with default values and a new configuration file has been placed at \'{shortpath}\'.')
+
+if ERRONEOUS_FILES:
+    logging.critical(f'{len(ERRONEOUS_FILES)} erroneous files were found. Please correct all errors before running the program.')
+    sys.exit()
+
+# CONSTANT PATHS
+BANNED_COMMANDS_PATH = os.path.join(CONFIG_PATH, 'banned-commands.json')
+CROSSLINK_IDS_PATH = os.path.join(CONFIG_PATH, 'crosslink-ids.json')
+MASTERS_PATH = os.path.join(CONFIG_PATH, 'masters.json')
+OIDS_PATH = os.path.join(CONFIG_PATH, 'o-ids.json')
+SPIDS_PATH = os.path.join(CONFIG_PATH, 'sp-ids.json')
+
+# Classes for easily creating objects perfect for managing config files
+class BasicFileManager(object):
+    def __init__(self, full_path):
+        self.full_path = full_path
+        with open(path, )
