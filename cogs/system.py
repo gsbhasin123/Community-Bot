@@ -43,7 +43,7 @@ class System(commands.Cog):
     @commands.command()
     @commands.cooldown(1, 10, commands.BucketType.user)
     async def cmd(self, ctx, *, cmd):
-        f = open("BannedCmds.json", "r")
+        f = open("banned-commands.json", "r")
         BannedCmds = f.read()
         f.close()
         if ctx.author.id in OIDs:
