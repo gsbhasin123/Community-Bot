@@ -27,7 +27,7 @@ class Basic(commands.Cog):
 
     @commands.command()
     async def invite(self,ctx):
-        await ctx.send("Thanks for inviting me to your server! \nhttps://discordapp.com/oauth2/authorize?client_id=610225885093691467&scope=bot&permissions=8")
+        await ctx.send("Thanks for inviting me to your server!\nhttps://discordapp.com/oauth2/authorize?client_id=610225885093691467&scope=bot&permissions=8")
 
     @commands.command()
     async def support(self,ctx):

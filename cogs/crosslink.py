@@ -19,11 +19,11 @@ class CrossLink(commands.Cog):
                 await ctx.send(f'Adding <#{channel_id}> to the link network...')
                 crosslink_ids.append(crosslink_ids)
                 json.dump(crosslink_ids, file)
-                await ctx.send(f'Added <#{channel_id}> to `CIDs.json`, aka I enabled CrossLink in this channel')
+                await ctx.send(f'Added <#{channel_id}> to `crosslink-ids.json`, aka I enabled CrossLink in this channel')
 
     @commands.command(name='remove-link')
     async def remove_link(self,ctx):
-        f=open('CIDs.json','r')
+        f=open('crosslink-ids.json','r')
         CIDs = json.load(f)
         f.close()
         if ctx.channel.id not in CIDs:
@@ -31,15 +31,15 @@ class CrossLink(commands.Cog):
         else:
             await ctx.send(f'Removing <#{ctx.channel.id}> from the link network')
             CID = ctx.channel.id
-            f=open('CIDs.json','w+')
+            f=open('crosslink-ids.json','w+')
             CIDs.remove(CID)
             json.dump(CIDs,f)
             f.close()
-            await ctx.send(f'Removed <#{ctx.channel.id}> from `CIDs.json`, aka I disabled CrossLink in this channel')
+            await ctx.send(f'Removed <#{ctx.channel.id}> from `crosslink-ids.json`, aka I disabled CrossLink in this channel')
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        f=open('CIDs.json','r+')
+        f=open('crosslink-ids.json','r+')
         CIDs = json.load(f)
         f.close()
         user = message.author.name+"#"+message.author.discriminator
@@ -49,7 +49,6 @@ class CrossLink(commands.Cog):
                 for channel in CIDs:
                     if not message.channel.id == channel:
                         await self.bot.get_channel(int(channel)).send("**" + message.guild.name + "**-" + user + ": " + message.content.replace("@","(a)"))
-
 
         if message.channel.id == 637949482784260124 and message.author.id != self.bot.user.id:
             for channel in CIDs:

@@ -2,12 +2,13 @@ import asyncio
 import discord
 import subprocess
 from discord.ext import commands
+
 OIDs = [524288464422830095,241694485694775296,624305005385482281,401430005055488011]
 
-class system(commands.Cog):
+class System(commands.Cog):
     def __init__(self,bot):
         self.bot = bot
-        print("'system' Cog has been loaded!")
+        print("'System' Cog has been loaded!")
 
     @commands.command()
     async def wget(self,ctx,*,wget):
@@ -60,4 +61,4 @@ class system(commands.Cog):
             await ctx.send("You do not have permission to use that command")
 
 def setup(bot):
-    bot.add_cog(system(bot))
+    bot.add_cog(System(bot))
