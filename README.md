@@ -18,4 +18,5 @@ Contributors, please put your name by the feature you have added, It would be ea
 ## Acknowledgements
 **DJ0RDJ3#3296** - The actual host for the bot (Da best person ever!)
 **The Python Discord Server** - Where I get most of my help from
+**Xevion#0001** - For being interested in the bot and wanting to help work on it (Since I am terrible at managing files)
 **Me** - For actually wanting to do something productive
