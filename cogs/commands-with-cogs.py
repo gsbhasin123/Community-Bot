@@ -1,6 +1,7 @@
 import os
 import asyncio
 import discord
+import logging
 from discord.ext import commands
 
 ignore = [
@@ -10,10 +11,10 @@ ignore = [
 class CommandCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        print("'cog related commands' Cog has been loaded!")
+        logging.info("'CommandCog' Cog has been loaded!")
 
     @commands.command(name = 'cog-list')
-    async def Cog_list(self, ctx):
+    async def list_of_cogs(self, ctx):
         X = 0
         cogList = ""
         for filename in os.listdir('./cogs/'):

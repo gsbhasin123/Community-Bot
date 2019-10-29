@@ -1,5 +1,6 @@
 import asyncio
 import discord
+import logging
 from discord.ext import commands
 
 CENTRAL_CHANNEL = 635077321807626250
@@ -8,7 +9,7 @@ CENTRAL_CHANNEL = 635077321807626250
 class ServerList(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        print("'ServerList' Cog has been loaded!")
+        logging.info("'ServerList' Cog has been loaded!")
 
     # Sends a list of the current servers its in in the current channel
     @commands.command(name="server-list")

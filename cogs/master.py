@@ -1,38 +1,37 @@
 import json
+import config
 import asyncio
 import discord
+import logging
 from discord.ext import commands
 
-f=open('masters.json','r+')
-masters = json.load(f)
-f.close()
 
 class Master(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        print("'Master' Cog has been loaded!")
+        logging.info("'Master' Cog has been loaded!")
 
     @commands.command()
     async def say(self, ctx, *, msg):
-        if ctx.author.id in masters:
+        if config.MASTERS.contains(ctx.author.id):
             await ctx.message.delete()
             await ctx.send(msg)
         else:
-            await ctx.send("You don't own meh")
+            await ctx.send("You are not a master.")
 
     @commands.command()
     async def spam(self, ctx, *, msg):
-        if ctx.author.id in masters:
+        if config.MASTERS.contains(ctx.author.id):
             for s in range(0, 100):
-                if ctx.author.id in masters:
-                    if ctx.message.content == "stop":
-                        break
-                    else:
-                        await ctx.send(msg)
+                if (
+                    config.MASTERS.contains(ctx.author.id)
+                    and ctx.message.content == "stop"
+                ):
+                    break
                 else:
-                    pass
+                    await ctx.send(msg)
         else:
-            await ctx.send("No I'm not gonna spam for you! Screw you!")
+            await ctx.send("You are not a Master.")
 
 
 def setup(bot):

@@ -1,16 +1,16 @@
 import discord
 from discord.ext import commands
+import logging
 
-class spy(commands.Cog):
-
+class Spy(commands.Cog):
     def __init__(self, client):
         self.client = client
-        print("Loaded dev")
-        
+        logging.info("'Spy' Cog has been loaded!")
+
     @commands.command()
-    async def spy(self, ctx, user : discord.Member):
+    async def spy(self, ctx, user: discord.Member):
         await ctx.send(f"")
 
 
 def setup(client):
-    client.add_cog(spy(client))
+    client.add_cog(Spy(client))

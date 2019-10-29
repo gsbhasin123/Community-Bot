@@ -1,12 +1,13 @@
 import asyncio
 import discord
+import logging
 from discord.ext import commands
 
-class help(commands.Cog):
+class Help(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 #        self.bot.remove_command("help")
-        print("'help' Cog has been loaded!")
+        logging.info("'Help' Cog has been loaded!")
 
     @commands.command()
     async def temphelp(self, ctx):
@@ -20,4 +21,4 @@ class help(commands.Cog):
         help.close
 
 def setup(bot):
-    bot.add_cog(help(bot))
+    bot.add_cog(Help(bot))

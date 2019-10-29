@@ -1,17 +1,15 @@
 import discord
+import logging
 from discord.ext import commands
 
-class math(commands.Cog):
-
+class Math(commands.Cog):
     def __init__(self, client):
         self.client = client
-        print("Loaded math")
+        logging.info("'Math' cog has been loaded!")
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("Ready")
-        
-
+        pass
 
 def setup(client):
-    client.add_cog(math(client))
+    client.add_cog(Math(client))
