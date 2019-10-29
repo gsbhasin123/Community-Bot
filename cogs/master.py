@@ -1,5 +1,5 @@
 import json
-import config
+from modules import config
 import asyncio
 import discord
 import logging

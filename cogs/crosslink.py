@@ -1,7 +1,7 @@
 import asyncio
 import discord
 import json
-import config
+from modules import config
 import re
 import logging
 from discord.ext import commands
