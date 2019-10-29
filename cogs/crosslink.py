@@ -2,6 +2,7 @@ import asyncio
 import discord
 import json
 import config
+import re
 from discord.ext import commands
 
 
@@ -36,15 +37,28 @@ class CrossLink(commands.Cog):
         else:
             await ctx.send('\n'.join(f'- {cid}' for cid in config.CROSSLINK_IDS.get_ids()))
 
+    def cleanse_mentions(self, string):
+        pattern = r'<@(\d+)>'
+        split = re.split(pattern, string)
+        cleanse = re.match(r'\d+', split[0])
+        for i in range(len(split)):
+            if cleanse:
+                item = self.bot.get_user(int(split[i]))
+                split[i] = f'{item.name}#{item.discriminator}'
+            cleanse = not cleanse
+        return ''.join(split).replace('@here', '@.here').replace('@everyone', '@.everyone')
+
     @commands.Cog.listener()
     async def on_message(self, message):
         crosslink_user = "{}#{}".format(message.author.name, message.author.discriminator)
         if (not message.author.bot and message.content.lower() != ".remove-link" and message.content.lower() != "/remove-link"):
-            crosslink_message = "**{}**-{}: {}".format(message.guild.name, crosslink_user, message.content.replace("@", "(a)"))
+            # Create the final message
+            crosslink_message = "**{}**-{}: {}".format(message.guild.name, crosslink_user, self.cleanse_mentions(message.content))
+            # Distribute to all end-point CrossLink servers
             if config.CROSSLINK_IDS.contains(message.channel.id):
                 # await self.bot.get_channel(int(637949482784260124)).send()
                 for channel in config.CROSSLINK_IDS.get_all_but(message.channel.id):
-                    await self.bot.get_channel(int(channel)).send(crosslink_message)
+                    await self.bot.get_channel(channel).send(crosslink_message)
 
         # Special unfiltered channel
         # if (message.channel.id == 637949482784260124 and message.author.id != self.bot.user.id):
