@@ -22,7 +22,7 @@ class Basic(commands.Cog):
         embed = discord.Embed(
             title="GitHub",
             description="Thanks you for being interested in Community bot! If you want to commit please know we don't mind whatever language you choose to help us(Even `C`)\nhttps://github.com/IpProxyNeon/Community-discord-bot/blob/master/README.md",
-            color=0x00FFFF,
+            color=0x00FFFF
         )
         await ctx.send(embed=embed)
 
