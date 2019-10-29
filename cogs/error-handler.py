@@ -14,7 +14,7 @@ class ErrorHandler(commands.Cog):
         if isinstance(error, commands.CommandNotFound):
             pass
         else:
-            print(error)
+            raise error
             await ctx.send(error)
 
 

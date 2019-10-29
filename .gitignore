@@ -2,3 +2,4 @@ cogs/__pycache__/**
 .vscode/**
 token.txt
 config/**.json
+__pycache__/**

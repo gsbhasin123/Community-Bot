@@ -10,7 +10,7 @@ ignore = [
 class CommandCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        print("'cog related commands' Cog has been loaded!")
+        print("'Cog Related Commands' Cog has been loaded!")
 
     @commands.command(name = 'cog-list')
     async def Cog_list(self, ctx):

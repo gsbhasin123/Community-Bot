@@ -123,7 +123,7 @@ class IDManager(BasicConfigManager):
     # Maintains that the file on the machine is ALWAYS up to date.
     def quickdump(func):
         def wrapper(self, *args, **kwargs):
-            func(*args, **kwargs)
+            func(self, *args, **kwargs)
             self.dump()
         return wrapper
 
@@ -170,6 +170,14 @@ class IDManager(BasicConfigManager):
                     raise IDNotPresentError(value)
             else:
                 self.data.remove(value)
+    
+    def get_ids(self):
+        return self.data
+
+    def get_all_but(self, value):
+        result = list(self.data)
+        result.remove(value)
+        return result
     
     def contains(self, value):
         return value in self.data
