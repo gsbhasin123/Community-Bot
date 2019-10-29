@@ -7,15 +7,15 @@ import functools
 
 
 # All required files for the config to be in order
-# First value is the suggested type (None if complex)
+# First value is the suggested type (None if complex, meaning it will not be checked)
 # Second value is the default value, could be list or dict or other JSON-seriable object
 FILES = {
     'token.json' : (None, ""),
     'banned-commands.json' : (str, []),
     'crosslink-ids.json' : (int, []),
     'masters.json' : (int, []),
-    'o-ids.json' : (int, []),
-    'sp-ids.json' : (int, [])
+    'owner-ids.json' : (int, []),
+    'spoof-ids.json' : (int, [])
 }
 
 # Constants
