@@ -22,6 +22,8 @@ FILES = {
 ALL_SAME_TYPE = lambda array, item_type : all(type(item) is item_type for item in array) # Lambda for detecting that all items in an array are of type 'item_type'
 ROOT = sys.path[0]
 CONFIG_PATH = os.path.join(ROOT, 'config')
+if not os.path.exists(CONFIG_PATH):
+    os.makedirs(CONFIG_PATH)
 AVAILABLE_CONFIGURATION_FILES = os.listdir(CONFIG_PATH)
 ERRONEOUS_FILES = []
 logging.basicConfig(level=logging.INFO)
