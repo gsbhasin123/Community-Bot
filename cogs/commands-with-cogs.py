@@ -14,7 +14,7 @@ class CommandCog(commands.Cog):
         logging.info("'CommandCog' Cog has been loaded!")
 
     @commands.command(name = 'cog-list')
-    async def cog_list(self, ctx):
+    async def list_of_cogs(self, ctx):
         X = 0
         cogList = ""
         for filename in os.listdir('./cogs/'):

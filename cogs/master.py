@@ -2,13 +2,14 @@ import json
 import config
 import asyncio
 import discord
+import logging
 from discord.ext import commands
 
 
 class Master(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        print("'Master' Cog has been loaded!")
+        logging.info("'Master' Cog has been loaded!")
 
     @commands.command()
     async def say(self, ctx, *, msg):

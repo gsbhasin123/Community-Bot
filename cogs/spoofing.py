@@ -11,7 +11,7 @@ class Spoof(commands.Cog):
         
     @commands.command()
     async def spoof(self, ctx, user : discord.Member):
-        if config.OIDs.contains(ctx.author.id):
+        if config.OWNER_IDS.contains(ctx.author.id):
             if config.SPIDS.contains(user.id):
                 await ctx.send(f'Removing <@{user.id}> from the spoofing list...')
                 config.SPIDS.remove_id(user.id)
@@ -21,7 +21,7 @@ class Spoof(commands.Cog):
         
     @commands.command()
     async def announce(self, ctx, *, message : str):
-        if config.OIDs.contains(ctx.author.id):
+        if config.OWNER_IDS.contains(ctx.author.id):
             await ctx.send("Bish please, Master removed the command")
 
     @commands.Cog.listener()
@@ -33,4 +33,4 @@ class Spoof(commands.Cog):
 
 
 def setup(client):
-    client.add_cog(spoof(client))
+    client.add_cog(Spoof(client))

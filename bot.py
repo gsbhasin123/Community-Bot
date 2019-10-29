@@ -50,7 +50,7 @@ async def cog_add(ctx,CogName,CogLink):
 
 @bot.command(name='update-cog')
 async def cog_update(ctx,CogName,CogLink):
-    if config.OIDS.contains(ctx.author.id):
+    if config.OWNER_IDS.contains(ctx.author.id):
         CogName = CogName.replace(".py",'')
         await ctx.send(f"Updating {CogName}...")
         print(f"{ctx.author} is updating the cog called {CogName}, with the link: {CogLink}")
@@ -63,7 +63,7 @@ async def cog_update(ctx,CogName,CogLink):
 
 @bot.command(name='remove-cog')
 async def cog_remove(ctx,CogName):
-    if config.OIDS.contains(ctx.author.id):
+    if config.OWNER_IDS.contains(ctx.author.id):
         await ctx.send("Unloading cog...")
         bot.unload_extension(f'cogs.{CogName}')
         await ctx.send(f"The cog {CogName} has successfully been unloaded!")
@@ -75,7 +75,7 @@ async def cog_remove(ctx,CogName):
 
 @bot.command()
 async def load(ctx, extension):
-    if config.OIDS.contains(ctx.author.id):
+    if config.OWNER_IDS.contains(ctx.author.id):
         if extension == 'system':
             await ctx.send("***Warning this is a dangerous cog, it can interact with your systems Terminal directly, please take caution***")
         await ctx.send(f"Loading {extension}...")
@@ -86,7 +86,7 @@ async def load(ctx, extension):
 
 @bot.command()
 async def reload(ctx, extension):
-    if config.OIDS.contains(ctx.author.id):
+    if config.OWNER_IDS.contains(ctx.author.id):
         await ctx.send(f"Unloading {extension}...")
         bot.unload_extension(f'cogs.{extension}')
         await ctx.send(f"{extension} has been unloaded!")
@@ -98,7 +98,7 @@ async def reload(ctx, extension):
 
 @bot.command()
 async def restart(ctx):
-    if config.OIDS.contains(ctx.author.id):
+    if config.OWNER_IDS.contains(ctx.author.id):
         try:
             bot.load_extension('cogs.system')
             print("Unloading the system cog now... (Needed to restart the bot)")
@@ -120,7 +120,7 @@ async def restart(ctx):
 
 @bot.command()
 async def unload(ctx, extension):
-    if config.OIDS.contains(ctx.author.id):
+    if config.OWNER_IDS.contains(ctx.author.id):
         await ctx.send(f"Unloading {extension}...")
         bot.unload_extension(f'cogs.{extension}')
         await ctx.send(f"{extension} has been unloaded!")

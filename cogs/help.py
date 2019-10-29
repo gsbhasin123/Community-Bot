@@ -21,4 +21,4 @@ class Help(commands.Cog):
         help.close
 
 def setup(bot):
-    bot.add_cog(help(bot))
+    bot.add_cog(Help(bot))
