@@ -4,6 +4,7 @@ import asyncio
 import discord
 from discord.ext import commands
 
+
 class Master(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -21,8 +22,11 @@ class Master(commands.Cog):
     async def spam(self, ctx, *, msg):
         if config.MASTERS.contains(ctx.author.id):
             for s in range(0, 100):
-                if config.MASTERS.contains(ctx.author.id) and ctx.message.content == "stop":
-                        break
+                if (
+                    config.MASTERS.contains(ctx.author.id)
+                    and ctx.message.content == "stop"
+                ):
+                    break
                 else:
                     await ctx.send(msg)
         else:
