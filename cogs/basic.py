@@ -1,16 +1,17 @@
 import asyncio
 import discord
+import logging
 from discord.ext import commands
 
 
 class Basic(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        print("'Basic' Cog has been loaded!")
+        logging.info("'Basic' Cog has been loaded!")
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print(f"Bot has logged in as {self.bot.user}")
+        logging.info(f"Bot has logged in as {self.bot.user}")
 
     @commands.command(name="server-count")
     async def server_count(self, ctx):
@@ -32,9 +33,7 @@ class Basic(commands.Cog):
 
     @commands.command()
     async def support(self, ctx):
-        await ctx.send(
-            "Here's the link for the support server!\nhttps://discord.gg/Hn3XeUk"
-        )
+        await ctx.send("Here's the link for the support server!\nhttps://discord.gg/Hn3XeUk")
 
 
 def setup(bot):

@@ -3,13 +3,14 @@ import discord
 import json
 import config
 import re
+import logging
 from discord.ext import commands
 
 
 class CrossLink(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        print("'CrossLink' Cog has been loaded!")
+        logging.info("'CrossLink' Cog has been loaded!")
 
     @commands.command(name="add-link")
     async def add_link(self, ctx):
@@ -61,9 +62,9 @@ class CrossLink(commands.Cog):
                     await self.bot.get_channel(channel).send(crosslink_message)
 
         # Special unfiltered channel
-        # if (message.channel.id == 637949482784260124 and message.author.id != self.bot.user.id):
-        #     for channel in config.CROSSLINK_IDS.get_all_but(637949482784260124):
-        #         await self.bot.get_channel(channel).send(message.content.replace("@", "(a)"))
+        if (message.channel.id == 637949482784260124 and message.author.id != self.bot.user.id):
+            for channel in config.CROSSLINK_IDS.get_all_but(637949482784260124):
+                await self.bot.get_channel(channel).send(message.content.replace("@", "(a)"))
 
 
 def setup(bot):

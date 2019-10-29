@@ -1,13 +1,13 @@
 import discord
 import json
 import config
+import logging
 from discord.ext import commands
 
-class spoof(commands.Cog):
-
+class Spoof(commands.Cog):
     def __init__(self, client):
         self.client = client
-        print("Loaded spoof")
+        logging.info("\'Spoof\' Cog has been loaded!")
         
     @commands.command()
     async def spoof(self, ctx, user : discord.Member):

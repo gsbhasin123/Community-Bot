@@ -2,6 +2,7 @@ import asyncio
 import discord
 import json
 import subprocess
+import logging
 from discord.ext import commands
 
 f=open('OIDs.json','r+')
@@ -11,7 +12,7 @@ f.close()
 class System(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        print("'System' Cog has been loaded!")
+        logging.info("'System' Cog has been loaded!")
 
     @commands.command()
     async def wget(self, ctx, *, wget):
