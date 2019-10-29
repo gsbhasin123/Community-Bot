@@ -38,7 +38,7 @@ async def on_ready():
 
 @bot.command(name='add-cog')
 async def cog_add(ctx,CogName,CogLink):
-    if config.OIS.contains(ctx.author.id):
+    if config.OWNER_IDS.contains(ctx.author.id):
         CogName = CogName.replace(".py",'')
         await ctx.send(f"Installing {CogName}...")
         print(f"{ctx.author} is downloading the cog called {CogName}, with the link: {CogLink}")
