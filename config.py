@@ -188,5 +188,5 @@ BANNED_COMMANDS = IDManager(BANNED_COMMANDS_PATH, 'Banned Commands', 'Banned Com
 CROSSLINK_IDS = IDManager(CROSSLINK_IDS_PATH, 'CrossLink IDs', 'CrossLink IDs Manager')
 MASTERS = IDManager(MASTERS_PATH, 'Master IDs', 'Master IDs Manager')
 OWNER_IDS = IDManager(OWNER_IDS_PATH, 'OIDs', 'OIDs Manager')
-SPIDS = IDManager(SPOOF_IDS_PATH, 'SPIDs', 'SPIDs Manager')
+SPOOF_IDS = IDManager(SPOOF_IDS_PATH, 'SPIDs', 'SPIDs Manager')
 logging.info('Initialized Config Managers')

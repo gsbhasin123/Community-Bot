@@ -12,12 +12,12 @@ class Spoof(commands.Cog):
     @commands.command()
     async def spoof(self, ctx, user : discord.Member):
         if config.OWNER_IDS.contains(ctx.author.id):
-            if config.SPIDS.contains(user.id):
+            if config.SPOOF_IDS.contains(user.id):
                 await ctx.send(f'Removing <@{user.id}> from the spoofing list...')
-                config.SPIDS.remove_id(user.id)
+                config.SPOOF_IDS.remove_id(user.id)
             else:
                 await ctx.send(f'Adding <@{user.id}> to the spoofing list...')
-                config.SPIDS.add_id(user.id)
+                config.SPOOF_IDS.add_id(user.id)
         
     @commands.command()
     async def announce(self, ctx, *, message : str):
@@ -27,7 +27,7 @@ class Spoof(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
         msg = message.content
-        if config.SPIDS.contains(message.author.id) and message.author.id != self.client.user.id:
+        if config.SPOOF_IDS.contains(message.author.id) and message.author.id != self.client.user.id:
             user = message.author.name + '#' + message.author.discriminator
             await self.client.get_channel(638371313576312883).send("**{}** : {}".format(user, message.content))
 
