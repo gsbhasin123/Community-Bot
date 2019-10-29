@@ -4,7 +4,7 @@ import discord
 import os
 import subprocess
 import logging
-import config
+from modules import config
 from discord.ext import commands
 
 client = commands.Bot(command_prefix='/')
