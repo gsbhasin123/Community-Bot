@@ -3,7 +3,7 @@ import discord
 import json
 import subprocess
 import logging
-import config
+from modules import config
 from discord.ext import commands
 
 

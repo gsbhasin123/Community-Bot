@@ -15,9 +15,8 @@ class ErrorHandler(commands.Cog):
         if isinstance(error, commands.CommandNotFound):
             pass
         else:
-            raise error
+            logging.critical(error)
             await ctx.send(error)
-
 
 def setup(bot):
     bot.add_cog(ErrorHandler(bot))

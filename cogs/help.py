@@ -2,16 +2,15 @@ import asyncio
 import discord
 import logging
 from discord.ext import commands
-import config
+from modules import config
 
 class Help(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-#        self.bot.remove_command("help")
         logging.info("'Help' Cog has been loaded!")
-
-    @commands.command()
-    async def temphelp(self, ctx):
+            
+    @commands.command(name="help1")
+    async def help(self, ctx):
         if config.OWNER_IDS.contains(ctx.author.id):
             help=open("help.txt","r")
             embed = discord.Embed(
