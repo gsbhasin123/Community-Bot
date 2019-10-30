@@ -1,1 +1,1 @@
-python3 bot.py && java -jar CommunityMusic.jar
+python3 bot.py & java -jar CommunityMusic.jar
