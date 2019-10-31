@@ -27,9 +27,9 @@ class CrossLink(commands.Cog):
             message = await ctx.send(f"Removing {ctx.channel.mention} from the link network...")
             config.CROSSLINK_IDS.remove_id(ctx.channel.id)
             print(type(message), message)
-            await message.edit(f"Removed {ctx.channel.mention} from CrossLink Network")
+            await message.edit(content=f"Removed {ctx.channel.mention} from CrossLink Network")
         except config.IDNotPresentError:
-            await message.send("Channel isn't in the CrossLink network.")
+            await ctx.send(content="Channel isn't in the CrossLink network.")
 
     @commands.command(name="get-links")
     async def get_inks(self, ctx):
