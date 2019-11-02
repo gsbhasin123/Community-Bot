@@ -57,7 +57,7 @@ class CrossLink(commands.Cog):
             crosslink_message = "**{}**-{}: {}".format(message.guild.name, crosslink_user, self.cleanse_mentions(message.content))
             # Distribute to all end-point CrossLink servers
             if config.CROSSLINK_IDS.contains(message.channel.id):
-                # await self.bot.get_channel(int(637949482784260124)).send()
+                await self.bot.get_channel(int(637949482784260124)).send()
                 for channel in config.CROSSLINK_IDS.get_all_but(message.channel.id):
                     await self.bot.get_channel(channel).send(crosslink_message)
 
