@@ -3,8 +3,7 @@ import discord
 import logging
 from discord.ext import commands
 
-CENTRAL_CHANNEL = 635077321807626250
-
+CENTRAL_CHANNEL = 640258344531001354
 
 class ServerList(commands.Cog):
     def __init__(self, bot):
@@ -20,15 +19,11 @@ class ServerList(commands.Cog):
     # Sends the list of servers to the server list channel
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
-        await bot.get_channel(CENTRAL_CHANNEL).send(
-            f'- "{guild.name}" has added the bot!'
-        )
+        await bot.get_channel(int(CENTRAL_CHANNEL)).send(f'- "{guild.name}" has added the bot!')
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild):
-        await bot.get_channel(CENTRAL_CHANNEL).send(
-            f'- "{guild.name}" has removed the bot...'
-        )
+        await bot.get_channel(int(CENTRAL_CHANNEL)).send(f'- "{guild.name}" has removed the bot...')
 
 
 def setup(bot):
