@@ -17,6 +17,7 @@ class ErrorHandler(commands.Cog):
         else:
             logging.critical(error)
             await ctx.send(error)
+            self.bot.get_channel(640123802386169856).send(error)
 
 def setup(bot):
     bot.add_cog(ErrorHandler(bot))
