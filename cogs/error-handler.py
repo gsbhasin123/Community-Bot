@@ -13,11 +13,11 @@ class ErrorHandler(commands.Cog):
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
         if isinstance(error, commands.CommandNotFound):
-            pass
-        else:
             logging.critical(error)
             await ctx.send(error)
             self.bot.get_channel(640123802386169856).send(error)
+        else:
+            pass
 
 def setup(bot):
     bot.add_cog(ErrorHandler(bot))
