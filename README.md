@@ -17,7 +17,7 @@ Windows users, please use the `shell`, and make sure you use windows 10, otherwi
 Contributors, please put your name by the feature you have added, It would be easier to contact the creator for a certain command if it breaks ToS or something, Also make sure you join the community discord so you can help people
 
 ## Acknowledgements
-**DJ0RDJ3#3296**: - The actual host for the bot (Da best person ever!)
-**The Python Discord Server**: - Where I get most of my help from
-**Xevion#0001**: - For being interested in the bot and wanting to help work on it (Since I am terrible at managing files)
-**Me**: - For actually wanting to do something productive
+**DJ0RDJ3#3296**: - The actual host for the bot (Da best person ever!).
+**The Python Discord Server**: - Where I get most of my help from.
+**Xevion#0001**: - For being interested in the bot and wanting to help work on it (Since I am terrible at managing files).
+**Me**: - For actually wanting to do something productive.
