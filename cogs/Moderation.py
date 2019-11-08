@@ -43,7 +43,7 @@ class moderation(commands.Cog):
         if amount < 0:
             await ctx.send("I can only delete positive amount of messages!")
             amount = 0
-            
+        await ctx.message.delete()
         await ctx.trigger_typing()
         await ctx.channel.purge(limit=amount)
         embed = discord.Embed(title="Cleared messages", description=f"{amount} message(s) cleared\nSelf destructing after 3 seconds...", color=0x00ff00)
