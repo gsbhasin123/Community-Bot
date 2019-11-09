@@ -20,7 +20,7 @@ discordLogging.setLevel(logging.WARNING)
 async def update_command_cog(ctx):
     await ctx.send("Updating...")
     bot.unload_extension("cogs.commands-with-cogs")
-    subprocess.call("wget -O commands-with-cogs.py https://raw.githubusercontent.com/IpProxyNeon/Community-discord-bot/master/cogs/commands-with-cogs.py",shell=True)
+    subprocess.call("cd cogs && wget -O commands-with-cogs.py https://raw.githubusercontent.com/IpProxyNeon/Community-discord-bot/master/cogs/commands-with-cogs.py",shell=True)
     bot.load_extension("cogs.commands-with-cogs")
     await ctx.send("Done")
 
