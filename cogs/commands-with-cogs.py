@@ -66,7 +66,10 @@ class CommandCog(commands.Cog):
     async def load(self, ctx, extension):
         if config.OWNER_IDS.contains(ctx.author.id):
             if extension == 'system':
-                await ctx.send("***Warning this is a dangerous cog, it can interact with your systems Terminal directly, please take caution***")
+                if ctx.author.id == 241694485694775296 or ctx.author.id == 524288464422830095:
+                    await ctx.send("***Warning this is a dangerous cog, it can interact with your systems Terminal directly, please take caution***")
+                else:
+                    return
             await ctx.send(f"Loading {extension}...")
             self.bot.load_extension(f'cogs.{extension}')
             await ctx.send(f"{extension} has been loaded!")
