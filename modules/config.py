@@ -10,7 +10,6 @@ import functools
 # First value is the suggested type (None if complex, meaning it will not be checked)
 # Second value is the default value, could be list or dict or other JSON-seriable object
 FILES = {
-    'token.json' : (None, ""),
     'banned-commands.json' : (str, []),
     'crosslink-ids.json' : (int, []),
     'masters.json' : (int, []),
@@ -71,7 +70,6 @@ if ERRONEOUS_FILES:
     sys.exit()
 
 # CONSTANT PATHS
-TOKEN_PATH = os.path.join(CONFIG_PATH, 'token.json')
 BANNED_COMMANDS_PATH = os.path.join(CONFIG_PATH, 'banned-commands.json')
 CROSSLINK_IDS_PATH = os.path.join(CONFIG_PATH, 'crosslink-ids.json')
 MASTERS_PATH = os.path.join(CONFIG_PATH, 'masters.json')
