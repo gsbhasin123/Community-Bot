@@ -2,3 +2,6 @@ cogs/__pycache__/**
 .vscode/**
 token.txt
 __pycache__/**
+main.py
+pyproject.toml
+poetry.lock
