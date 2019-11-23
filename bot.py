@@ -46,4 +46,4 @@ for filename in os.listdir('./cogs'):
     else:
         pass
 
-bot.run(config.TOKEN.data)
+bot.run(os.environ.get("TOKEN"))
