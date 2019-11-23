@@ -183,7 +183,6 @@ class IDManager(BasicConfigManager):
         return value in self.data
 
 logging.info('Initializing Config Managers')
-TOKEN = BasicConfigManager(TOKEN_PATH, 'Token', 'Token Manager')
 BANNED_COMMANDS = IDManager(BANNED_COMMANDS_PATH, 'Banned Commands', 'Banned Commands Manager')
 CROSSLINK_IDS = IDManager(CROSSLINK_IDS_PATH, 'CrossLink IDs', 'CrossLink IDs Manager')
 MASTERS = IDManager(MASTERS_PATH, 'Master IDs', 'Master IDs Manager')
