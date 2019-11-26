@@ -1,2 +1,5 @@
 discord
 flask
+aiohttp
+git-client
+websockets
