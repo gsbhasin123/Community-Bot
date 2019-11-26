@@ -35,7 +35,12 @@ class Help(commands.Cog):
         Commands=''
         for command in self.bot.commands:
             Commands = Commands + command.name + "\n"
-        await ctx.send(Commands)
+            embed = discord.Embed(
+            title="Help",
+            description=f"```css\n{Commands}```",
+            color=0x21FFAF,
+            )
+            await ctx.send(embed=embed)
 
 def setup(bot):
     bot.add_cog(Help(bot))
