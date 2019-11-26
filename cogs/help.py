@@ -34,7 +34,7 @@ class Help(commands.Cog):
     async def owner_help(self, ctx):
         Commands=''
         for command in self.bot.commands:
-            Commands = Commands + command + "\n"
+            Commands = Commands + command.name + "\n"
         await ctx.send(Commands)
 
 def setup(bot):
