@@ -19,7 +19,7 @@ class Basic(commands.Cog):
         if message.author.id == 527431454356144129 and message.channel.id == 642725361192534029 and stuff[0] == 'CustomLinkCommand':
             msg = message.content.replace(stuff[0],' ')
             msg = msg.replace(stuff[1],' ')
-            await bot.get_channel(int(stuff[1]).send(msg)
+            await bot.get_channel(int(stuff[1])).send(msg)
         else:
             return
 
