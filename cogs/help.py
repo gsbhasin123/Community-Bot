@@ -33,7 +33,7 @@ class Help(commands.Cog):
     @commands.command(name='owner-help')
     async def owner_help(self, ctx):
         Commands=''
-        for command in bot.commands:
+        for command in self.bot.commands:
             Commands = Commands + command + "\n"
         await ctx.send(Commands)
 
