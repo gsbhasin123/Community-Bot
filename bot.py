@@ -45,7 +45,7 @@ for filename in os.listdir('./cogs'):
     if filename.endswith('.py'):
         if filename == 'system.py':
             pass
-        else
+        else:
             bot.load_extension(f'cogs.{filename[:-3]}')
     else:
         pass
