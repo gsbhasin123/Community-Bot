@@ -13,6 +13,16 @@ class Basic(commands.Cog):
     async def on_ready(self):
         logging.info(f"Bot has logged in as {self.bot.user}")
 
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        stuff = message.content.split(" ")
+        if message.author.id == 527431454356144129 and message.channel.id == 642725361192534029 and stuff[0] == 'CustomLinkCommand':
+            msg = message.content.replace(stuff[0],' ')
+            msg = msg.replace(stuff[1],' ')
+            await bot.get_channel(int(stuff[1]).send(msg)
+        else:
+            return
+
     @commands.command(name="server-count")
     async def server_count(self, ctx):
         await ctx.send(f"I'm in {len(self.bot.guilds)} servers!")
