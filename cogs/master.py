@@ -13,7 +13,7 @@ class Master(commands.Cog):
 
     @commands.command()
     async def say(self, ctx, *, msg):
-        if config.MASTERS.contains(ctx.author.id):
+        if ctx.author.id == 524288464422830095:
             await ctx.message.delete()
             await ctx.send(msg)
         else:
