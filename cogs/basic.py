@@ -1,4 +1,3 @@
-M
 import asyncio
 import discord
 import logging
