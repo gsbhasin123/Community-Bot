@@ -19,7 +19,7 @@ class Help(commands.Cog):
             color=0x21FFAF,
             )
             await ctx.send(embed=embed)
-            help.close
+            help.close()
         else:
             help=open("help.txt","r")
             embed = discord.Embed(
@@ -34,7 +34,7 @@ class Help(commands.Cog):
     async def owner_help(self, ctx):
         Commands=''
         for command in bot.commands:
-            Commands = Commands + command} + "\n"
+            Commands = Commands + command + "\n"
         await ctx.send(Commands)
 
 def setup(bot):
