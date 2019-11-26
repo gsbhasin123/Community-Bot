@@ -9,7 +9,7 @@ class Help(commands.Cog):
         self.bot = bot
         logging.info("'Help' Cog has been loaded!")
             
-    @commands.command(name="help1")
+    @commands.command(name="help")
     async def help(self, ctx):
         if config.OWNER_IDS.contains(ctx.author.id):
             help=open("help.txt","r")
@@ -28,7 +28,14 @@ class Help(commands.Cog):
             color=0x21FFAF,
             )
             await ctx.send(embed=embed)
-            help.close
+            help.close()
+
+    @commands.command(name='owner-help')
+    async def owner_help(self, ctx):
+        Commands=''
+        for command in bot.commands:
+            Commands = Commands + command} + "\n"
+        await ctx.send(Commands)
 
 def setup(bot):
     bot.add_cog(Help(bot))
