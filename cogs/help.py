@@ -23,20 +23,19 @@ class Help(commands.Cog):
     @commands.command(name='owner-help')
     async def owner_help(self, ctx):
         if config.OWNER_IDS.contains(ctx.author.id):
-            pass
+            Commands=''
+            X = 0
+            for command in self.bot.commands:
+                Commands = Commands + command.name + "\n"
+                X = X + 1
+            embed = discord.Embed(
+            title="Help",
+            description=f"```css\n{Commands}```There are {X} commands in total (Python bot only)",
+            color=0x21FFAF,
+            )
+            await ctx.send(embed=embed)
         else:
-            return
-        Commands=''
-        X = 0
-        for command in self.bot.commands:
-            Commands = Commands + command.name + "\n"
-            X = X + 1
-        embed = discord.Embed(
-        title="Help",
-        description=f"```css\n{Commands}```There are {X} commands in total (Python bot only)",
-        color=0x21FFAF,
-        )
-        await ctx.send(embed=embed)
+            pass
 
 def setup(bot):
     bot.add_cog(Help(bot))
