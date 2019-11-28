@@ -127,4 +127,3 @@ async def restart(client, message, content):
         await Pagination(client, message.channel, [Embed('An extension raised:',content) for content in err.messages])
     else:
         await client.message_create(message.channel,'Done!')
-    
