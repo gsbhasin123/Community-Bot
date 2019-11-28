@@ -23,9 +23,8 @@ async def list_of_cogs(client, message, content):
     count = 0
     
     for filename in os.listdir('./cogs/'):
-        if (filename in ignore) or (not filename.endswith('.py')):
+        if not filename.endswith('.py'):
             continue
-         
         result.append(filename)
         result.append('\n')
         count = count +1
