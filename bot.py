@@ -12,10 +12,10 @@ from hata.events import CommandProcesser, ReactionAddWaitfor,               \
 from hata.extension_loader import ExtensionLoader, ExtensionError
 
 
-# load theese, we dont actually use it tho
+# load these, we dont actually use it tho
 from modules import config
 
-TOKEN='TOKEN'
+TOKEN = os.environ.get("TOKEN")
 
 CommunityBot = Client(TOKEN)
 
