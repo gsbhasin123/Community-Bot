@@ -1,7 +1,7 @@
 from hata import eventlist, Embed, ChannelText
 from hata.events import ContentParser
 
-from modules import config
+from cbmodules import config
 
 commands = eventlist()
 
