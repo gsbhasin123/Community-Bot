@@ -45,11 +45,11 @@ def entry(client):
     async def CustomLinkCommand(message):
         if message.author.id == 527431454356144129:
             return
-        stuff = list(message)
+        stuff = message.content.split(' ')
         if stuff[0] != 'CustomLinkCommand':
             return
         channel = ChannelText.precreate(int(stuff[1]))
-        message = message.replace('@','(a)')
-        await client.message_create(channel, message)
+        msg = message.content.replace('@','(a)')
+        await client.message_create(channel, msg)
     
     client.events.message_create.append(CustomLinkCommand,channel)
