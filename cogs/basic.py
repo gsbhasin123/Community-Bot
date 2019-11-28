@@ -1,4 +1,4 @@
-from hata import eventlist, Embed
+from hata import eventlist, Embed, ChannelText
 
 commands = eventlist()
 
