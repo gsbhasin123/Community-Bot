@@ -43,7 +43,9 @@ async def ping(client, message, content):
 def entry(client):
     channel=ChannelText.precreate(642725361192534029)
     async def CustomLinkCommand(message):
-        if message.author.id != 527431454356144129:
+        if message.author.id == 527431454356144129:
+            pass
+        else:
             return
         stuff = message.content.split(' ')
         if stuff[0] != 'CustomLinkCommand':
