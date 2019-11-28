@@ -1,28 +1,22 @@
-import asyncio
-import discord
-import json
-import logging
-from modules import config
-from discord.ext import commands
+from hata import Guild, ChannelText
 
-class WelcomeGoodbyes(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-        logging.info("'Welcomer/leaver' Cog has been loaded!")
+WELCOME_GUILD = Guild.precreate(637899212385812491)
+WELCOME_CHANNEL = ChannelText.precreate(640200978225954846)
 
-    @commands.Cog.listener()
-    async def on_member_join(self,member):
-        if member.guild.id == 637899212385812491:
-            await self.bot.get_channel(640200978225954846).send(f"<@{member.id}> has joined the server! Thanks for joining!")
-        else:
-            pass
+async def guild_user_add(client, guild, user):
+    if guild is WELCOME_GUILD:
+        await client.message_create(WELCOME_CHANNEL,
+            f'{user:m} has joined the server! Thanks for joining!')
 
-    @commands.Cog.listener()
-    async def on_member_remove(self,member):
-        if member.guild.id == 637899212385812491:
-            await self.bot.get_channel(640200978225954846).send(f"{member} has left the server... We hope that you will come back soon...")
-        else:
-            pass
+async def guild_user_delete(client, guild, user, profile):
+    if guild is WELCOME_GUILD:
+        await client.message_create(WELCOME_CHANNEL,
+            f'{user:f} has left the server... We hope that you will come back soon...')
 
-def setup(bot):
-    bot.add_cog(WelcomeGoodbyes(bot))
+def entry(client):
+    client.events(guild_user_add)
+    client.events(guild_user_delete)
+
+def exit(client):
+    del client.events.guild_user_add
+    del client.events.guild_user_delete

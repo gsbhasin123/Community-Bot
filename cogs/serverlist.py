@@ -1,30 +1,52 @@
-import asyncio
-import discord
-import logging
-from discord.ext import commands
+from hata import ChannelText, eventlist, Embed
+from hata.events import Pagination
 
-CENTRAL_CHANNEL = 640258344531001354
+CENTRAL_CHANNEL = ChannelText.precreate(640258344531001354)
 
-class ServerList(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-        logging.info("'ServerList' Cog has been loaded!")
+commands = eventlist()
 
-    # Sends a list of the current servers its in in the current channel
-    @commands.command(name="server-list")
-    async def server_list(self, ctx):
-        await ctx.send("Warning - this command may take a moment...")
-        await ctx.send("\n".join(f"- {guild.name}" for guild in self.bot.guilds))
+class GuildLister(object):
+    __slots__=('guilds',)
+    def __init__(self,client):
+        guilds=[]
+        sub_guilds=[]
+        for guild in client.guild_profiles:
+            sub_guilds.append(guild)
+            
+            if len(sub_guilds)==20:
+                guilds.append(sub_guilds)
+                sub_guilds=[]
+                
+        if sub_guilds:
+            guilds.append(sub_guilds)
+        del sub_guilds
+        
+        self.guilds=guilds
 
-    # Sends the list of servers to the server list channel
-    @commands.Cog.listener()
-    async def on_guild_join(self, guild):
-        await bot.get_channel(int(CENTRAL_CHANNEL)).send(f'- "{guild.name}" has added the bot!')
+    def __len__(self):
+        return self.guilds.__len__()
 
-    @commands.Cog.listener()
-    async def on_guild_remove(self, guild):
-        await bot.get_channel(int(CENTRAL_CHANNEL)).send(f'- "{guild.name}" has removed the bot...')
+    def __getitem__(self, index):
+        return Embed('\n'.join(f'- {guild.name}' for guild in self.guilds[index]))
+
+        
+@commands(case='server-list')
+async def server_list(client, message, content):
+    await Pagination(client, message.channel, GuildLister(client))
+
+async def guild_create(client, guild):
+    print(1)
+    await client.message_create(CENTRAL_CHANNEL, f'- `{guild.name}` has added the bot!')
+
+async def guild_delete(client, guild, profile):
+    await client.message_create(CENTRAL_CHANNEL, f'- `{guild.name}` has removed the bot...')
+
+def entry(client):
+    client.events(guild_create)
+    client.events(guild_delete)
+
+def exit(client):
+    del client.events.guild_create
+    del client.events.guild_delete
 
 
-def setup(bot):
-    bot.add_cog(ServerList(bot))

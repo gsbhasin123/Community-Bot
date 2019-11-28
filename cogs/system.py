@@ -1,64 +1,85 @@
-import asyncio
-import discord
-import json
 import subprocess
-import logging
+
+from hata import eventlist, alchemy_incendiary
+from hata.events import Cooldown
+
 from modules import config
-from discord.ext import commands
 
+commands=eventlist()
 
-class System(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-        logging.info("'System' Cog has been loaded!")
+@commands
+async def wget(client, message, content):
+    if not client.is_owner(message.author):
+        await client.message_create(message.channel,
+            'You do not have permission to use that command')
+        return
+    
+    await client.message_create(message.channel,'Downloading file...')
 
-    @commands.command()
-    async def wget(self, ctx, *, wget):
-        if config.OWNER_IDS.contains(ctx.author.id):
-            await ctx.send("Downloading file...")
-            subprocess.call(f"wget {wget}", shell=True)
-            await ctx.send("Operation completed successfully!")
-        else:
-            await ctx.send("You do not have permission to use that command")
+    await client.loop.run_in_executor(alchemy_incendiary(
+        subprocess.call,
+        (f'wget {content}',),
+        {'shell':True},))
 
-    @commands.command(name="pip")
-    @commands.cooldown(1, 10, commands.BucketType.user)
-    async def pip(self, ctx, *, pip):
-        if config.OWNER_IDS.contains(ctx.author.id):
-            await ctx.send("installing module...")
-            subprocess.call(f"pip {pip}", shell=True)
-            await ctx.send("Operation completed successfully!")
-        else:
-            await ctx.send("You do not have permission to use that command")
+    await client.message_create(message.channel,
+        'Operation completed successfully!')
+    
+@commands
+@Cooldown('user',10.)
+async def pip(client, message, content):
+    if not client.is_owner(message.author):
+        await client.message_create(message.channel,
+            'You do not have permission to use that command')
+        return
+    
+    await client.message_create(message.channel,'installing module...')
 
-    @commands.command(name="pip3")
-    @commands.cooldown(1, 10, commands.BucketType.user)
-    async def pip_three(self, ctx, *, pip):
-        if config.OWNER_IDS.contains(ctx.author.id):
-            await ctx.send("installing module...")
-            subprocess.call(f"pip3 {pip}", shell=True)
-            await ctx.send("Operation completed successfully!")
-        else:
-            await ctx.send("You do not have permission to use that command")
+    await client.loop.run_in_executor(alchemy_incendiary(
+        subprocess.call,
+        (f'pip {content}',),
+        {'shell':True},))
 
-    @commands.command()
-    @commands.cooldown(1, 10, commands.BucketType.user)
-    async def cmd(self, ctx, *, cmd):
-        if config.OWNER_IDS.contains(ctx.author.id):
-            if cmd == "wget":
-                await ctx.send("Use the wget command instead")
-            elif cmd == "ls":
-                await ctx.send("'tree' is better then 'ls'")
-                output = subprocess.getoutput("tree")
-                await ctx.send(output)
-            elif config.BANNED_COMMANDS.contains(cmd):
-                await ctx.send("No one, not even master, can use those commands...")
-            else:
-                output = subprocess.getoutput(cmd)
-                await ctx.send(output)
-        else:
-            await ctx.send("You do not have permission to use that command")
+    await client.message_create(message.channel,'Operation completed successfully!')
 
+@commands
+@pip.shared()
+async def pip3(client, message, content):
+    if not client.is_owner(message.author):
+        await client.message_create(message.channel,
+            'You do not have permission to use that command')
+        return
+    
+    await client.message_create(message.channel,'installing module...')
 
-def setup(bot):
-    bot.add_cog(System(bot))
+    await client.loop.run_in_executor(alchemy_incendiary(
+        subprocess.call,
+        (f'pip3 {content}',),
+        {'shell':True},))
+
+    await client.message_create(message.channel,'Operation completed successfully!')
+
+@commands
+@pip.shared()
+async def cmd(client, message, content):
+    if not client.is_owner(message.author):
+        await client.message_create(message.channel,
+            'You do not have permission to use that command')
+        return
+
+    if content == 'wget':
+        result = 'Use the wget command instead'
+    elif content == 'ls':
+        await client.message_create(message.channel, '`tree` is better than `ls`')
+        result = await client.loop.run_in_executor(alchemy_incendiary(
+            subprocess.getoutput,
+            ('tree',),))
+            
+    elif cmd in config.BANNED_COMMANDS:
+        result='No one, not even master, can use those commands...'
+    else:
+        result = await client.loop.run_in_executor(alchemy_incendiary(
+            subprocess.getoutput,
+            (content,),))
+        
+    await client.message_create(message.channel, result)
+
