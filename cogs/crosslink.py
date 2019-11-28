@@ -2,7 +2,7 @@ import re
 
 from hata import eventlist, ChannelText, CHANNELS
 
-from modules import config
+from cbmodules import config
 
 commands = eventlist()
 
