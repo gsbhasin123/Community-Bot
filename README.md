@@ -4,7 +4,7 @@ A discord bot that anyone can modify and commit to! I want it to be as open-sour
 ## Features
 You can invite the bot to your server by clicking [here](https://discordapp.com/oauth2/authorize?client_id=610225885093691467&scope=bot&permissions=8).
 A feature list is available in the [help file](https://github.com/IpProxyNeon/Community-discord-bot/blob/master/help.txt)!
-You can check out the bot by joining [this Discord Server](https://discord.gg/9zt7zdu) too!
+You can check out the bot by joining [this Discord Server](https://discord.gg/gyHvBXS) too!
 
 ## Programming languages
 You can use any programming language but preferably NodeJS or Python as I use Python the most, and I can understand NodeJS a bit, but any language is fine (Even C)! 
