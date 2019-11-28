@@ -21,11 +21,11 @@ async def lib_updater(client, message, content):
 	await client.update_application_info()  #enables using .is_owner()
 
 	if not client.is_owner(message.author):
-		await Vega.message_create(
+		await client.message_create(
 		    message.channel,
-		    "You are not Proxy! I will not allow you to update the lib!")
+		    "You are not the owner of meh! I will not allow you to update the lib!")
 		return
-	await Vega.message_create(message.channel, "Updating the library now...")
+	await client.message_create(message.channel, "Updating the library now...")
 	url = 'https://github.com/HuyaneMatsu/hata/archive/master.zip'
 	async with client.http.request_get(url) as response:
 		data = await response.read()
