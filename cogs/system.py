@@ -11,10 +11,23 @@ from cbmodules import config
 
 commands=eventlist()
 
-from io import BytesIO
-from shutil import rmtree as rm
-from shutil import move as mv
-from zipfile import ZipFile
+class Unzipper:
+	def __init__(self, data):
+		self.data = data
+
+	def __call__(self):
+		buffer = BytesIO(self.data)
+		archive = ZipFile(buffer)
+
+		for file in archive.namelist():
+			if not file.startswith('hata-master/hata/'):
+				continue
+			archive.extract(file)
+		archive.close()
+		buffer.close()
+		rm("./hata/")  # I've renamed `rmtree` from shutil to `rm`
+		mv('./hata-master/hata/', './')  # '.' means current directory
+		rm('./hata-master/')
 
 @commands(case='lib-update')
 async def lib_updater(client, message, content):
