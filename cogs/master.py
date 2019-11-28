@@ -1,6 +1,6 @@
 from hata import eventlist
 
-from modules import config
+from cbmodules import config
 
 commands = eventlist()
 
