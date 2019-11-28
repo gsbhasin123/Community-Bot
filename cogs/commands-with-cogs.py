@@ -5,7 +5,7 @@ from hata import eventlist, Embed, alchemy_incendiary
 from hata.events import ContentParser, Pagination
 from hata.extension_loader import ExtensionError
 
-from modules import config
+from cbmodules import config
 
 DoNotLoad = [
     'system.py'
