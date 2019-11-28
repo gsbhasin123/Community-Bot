@@ -39,4 +39,3 @@ async def default_event(client, message):
     # content can be 2k chars, so cannot send it for sure > lets use embed
     await client.message_create(message.channel,
         embed=Embed(message.author.full_name, message.content))
-
