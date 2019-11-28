@@ -27,4 +27,4 @@ async def invite(client, message, content):
 @commands
 async def support(client, message, content):
     await client.message_create(message.channel,
-        'Here\'s the link for the support server!\nhttps://discord.gg/Hn3XeUk')
+        'Here\'s the link for the support server!\nhttps://discord.gg/gyHvBXS')
