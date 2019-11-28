@@ -28,3 +28,19 @@ async def invite(client, message, content):
 async def support(client, message, content):
     await client.message_create(message.channel,
         'Here\'s the link for the support server!\nhttps://discord.gg/gyHvBXS')
+
+def entry(client):
+    channel=ChannelText.precreate(642725361192534029)
+    async def CustomLinkCommand(message):
+        if message.author.id == 527431454356144129:
+            return
+        stuff = message.split(" ")
+        if 'CustomLinkCommand' not in stuff[0]:
+            return
+        channel = ChannelText.precreate(int(stuff[1]))
+        banned_words = ['@here','@everyone']
+        for word in banned_words:
+            message = message.replace(word,'(Bad word!)')
+        await client.message_create(channel, message)
+    
+    client.events.message_create.append(CustomLinkCommand,channel)
