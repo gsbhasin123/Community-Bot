@@ -11,7 +11,6 @@ from hata.events import CommandProcesser, ReactionAddWaitfor,               \
 
 from hata.extension_loader import ExtensionLoader, ExtensionError
 
-
 # load these, we dont actually use it tho
 from cbmodules import config
 
