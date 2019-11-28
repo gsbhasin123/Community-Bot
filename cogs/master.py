@@ -1,38 +1,35 @@
-import json
+from hata import eventlist
+
 from modules import config
-import asyncio
-import discord
-import logging
-from discord.ext import commands
 
+commands = eventlist()
 
-class Master(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-        logging.info("'Master' Cog has been loaded!")
+@commands
+async def say(client, message, content):
+    if message.author.id not in config.MASTERS:
+        await client.message_create(message.channel, 'You are not a master.')
+        return
 
-    @commands.command()
-    async def say(self, ctx, *, msg):
-        if ctx.author.id == 524288464422830095:
-            await ctx.message.delete()
-            await ctx.send(msg)
-        else:
-            await ctx.send("You are not a master.")
+    # create task from it, so it happens at the same time
+    client.loop.create_task(client.message_delete(message))
+    await client.message_create(message.channel, content)
+        
 
-    @commands.command()
-    async def spam(self, ctx, *, msg):
-        if config.MASTERS.contains(ctx.author.id):
-            for s in range(0, 100):
-                if (
-                    config.MASTERS.contains(ctx.author.id)
-                    and ctx.message.content == "stop"
-                ):
-                    break
-                else:
-                    await ctx.send(msg)
-        else:
-            await ctx.send("You are not a Master.")
+@commands
+async def spam(client, message, content):
+    if message.author.id not in config.MASTERS:
+        await client.message_create(message.channel, 'You are not a master.')
+        return
+    
+    if not content:
+        return
+    
+    #remember on this message
+    message.weakrefer()
+    
+    for _ in range(100):
+        if message.content=='stop':
+            break
+        
+        await client.message_create(message.channel, content)
 
-
-def setup(bot):
-    bot.add_cog(Master(bot))

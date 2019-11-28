@@ -1,191 +1,133 @@
-import os
-import sys
-import json
-import asyncio
-import logging
-import functools
+import os, sys
+import json, logging
 
+from hata import KOKORO, Lock
 
-# All required files for the config to be in order
-# First value is the suggested type (None if complex, meaning it will not be checked)
-# Second value is the default value, could be list or dict or other JSON-seriable object
-FILES = {
-    'banned-commands.json' : (str, []),
-    'crosslink-ids.json' : (int, []),
-    'masters.json' : (int, []),
-    'owner-ids.json' : (int, []),
-    'spoof-ids.json' : (int, [])
-}
-
-# Constants
-ALL_SAME_TYPE = lambda array, item_type : all(type(item) is item_type for item in array) # Lambda for detecting that all items in an array are of type 'item_type'
-ROOT = sys.path[0]
-CONFIG_PATH = os.path.join(ROOT, 'config')
+CONFIG_PATH = os.path.join(sys.path[0], 'config')
 if not os.path.exists(CONFIG_PATH):
     os.makedirs(CONFIG_PATH)
-AVAILABLE_CONFIGURATION_FILES = os.listdir(CONFIG_PATH)
-ERRONEOUS_FILES = []
+
 logging.basicConfig(level=logging.INFO)
 
-# Start validating all required files
-logging.info(f'Starting validation of {len(FILES.keys())} configuration files.')
-for file in FILES.keys():
-    if file in AVAILABLE_CONFIGURATION_FILES:
-        with open(os.path.join(CONFIG_PATH, file), 'r') as fp:
-            # Open and validate that the file is valid json
-            try:
-                fp = json.load(fp)
-            except OSError:
-                logging.critical(f'Configuration file \'{file}\' could not be opened. Please close any programs that may be preventing access to the file.')
-                ERRONEOUS_FILES.append(file)
-                continue
-            except json.JSONDecodeError: # Incorrect JSON syntax possibly 
-                logging.critical(f'Configuration file \'{file}\' could not be deserialized.')
-                logging.critical(f'Please check that the configuration file\'s syntax is intact.')
-                ERRONEOUS_FILES.append(file)
-                continue
-            # Validate that the file is what we want out of the file
-            if FILES[file][0] is not None: # if a type was given
-                check_func = functools.partial(ALL_SAME_TYPE, item_type=FILES[file][0]) # create the checking func with the type we want
-                if not check_func(fp):
-                    logging.warning(f'Configuration file \'{file}\' did not pass tests for all values being of type \'{FILES[file][0]}\'.') # may want to make this critical?
-                else:
-                    logging.debug(f'Configuration file \'{file}\' passed similar types test.')
-            # All good.
-            logging.info(f'Successfully read \'{file}\' configuration file.')
-    else:
-        # No configuration file was found -> Create a new one using provided default values
-        logging.warning(f'Configuration file \'{file}\' could not be found.')
-        path = os.path.join(CONFIG_PATH, file)
-        shortpath = f'./config/{file}'
-        # Write default value to file
-        with open(path, 'w+') as fp:
-            json.dump(FILES[file][1], fp)
-        # Close with
-        logging.debug(f'Successfully wrote configuration file at \'{shortpath}\'')
-        logging.info(f'Configuration file will be read with default values and a new configuration file has been placed at \'{shortpath}\'.')
-
-if ERRONEOUS_FILES:
-    logging.critical(f'{len(ERRONEOUS_FILES)} erroneous files were found. Please correct all errors before running the program.')
-    sys.exit()
-
-# CONSTANT PATHS
-BANNED_COMMANDS_PATH = os.path.join(CONFIG_PATH, 'banned-commands.json')
-CROSSLINK_IDS_PATH = os.path.join(CONFIG_PATH, 'crosslink-ids.json')
-MASTERS_PATH = os.path.join(CONFIG_PATH, 'masters.json')
-OWNER_IDS_PATH = os.path.join(CONFIG_PATH, 'owner-ids.json')
-SPOOF_IDS_PATH = os.path.join(CONFIG_PATH, 'spoof-ids.json')
-
-# Classes for easily creating objects perfect for managing config files
-class BasicConfigManager(object):
-    def __init__(self, full_path, config_name='Configuration', config_type='Type'):
+# ID based manager with functions tailored to working with IDs, whether they be 
+class IDManager(object):
+    __slots__ = ('data', 'full_path', 'lock', )
+    def __init__(self, full_path,):
         self.full_path = full_path
-        self.config_name = config_name
-        self.config_type = config_type
-        with open(self.full_path) as fp:
-            self.data = json.load(fp)
-
+        if os.path.exists(full_path):
+            with open(self.full_path, 'r') as fp:
+                self.data = json.load(fp)
+        else:
+            self.data = []
+        
+        self.lock = Lock(KOKORO)
+        
     # Completely refresh from the current file on the system
     # Will erase and unsaved information in the data variable
-    def reload(self):
-        with open(self.full_path, 'r') as fp:
-            self.data = json.load()
-
+    async def reload(self):
+        async with self.lock:
+             await KOKORO.run_in_executor(self._reload)
         
-    
+    def _reload(self):
+        full_path=self.full_path
+        if os.path.exists(full_path):
+            with open(full_path, 'r') as fp:
+                self.data = json.load(fp)
+        else:
+            self.data = []
+
     # Dumps contents of manager to file.
-    def dump(self):
+    async def dump(self):
+        async with self.lock:
+            await KOKORO.run_in_executor(self._dump)
+        
+    def _dump(self):
         with open(self.full_path, 'w') as fp:
             json.dump(self.data, fp)
 
     # Saves file contents, then reloads them back
-    def refresh(self):
-        self.dump()
-        self.reload()
+    async def refresh(self):
+        async with self.lock:
+            await KOKORO.run_in_executor(self._refresh)
 
-# Exceptions you can use to detect use with 'except' when using IDManager
-class IDAlreadyPresentError(Exception):
-    def __init__(self, value, message="Value '{}' was already present."):
-        self.value = value
-        self.message = message.format(self.value)
-
-class IDNotPresentError(Exception):
-    def __init__(self, value, message="Value '{}' was not present."):
-        self.value = value
-        self.message = message.format(self.value)
-
-# ID based manager with functions tailored to working with IDs, whether they be 
-class IDManager(BasicConfigManager):
-    def __init__(self, full_path, config_name, config_type):
-        super().__init__(full_path)
-
-    # Decorator that simply runs self.dump() after executing the function
-    # Maintains that the file on the machine is ALWAYS up to date.
-    def quickdump(func):
-        def wrapper(self, *args, **kwargs):
-            func(self, *args, **kwargs)
-            self.dump()
-        return wrapper
-
-    # skip_duplicates
-    # True => Will not raise IDAlreadyPresentError when duplicate(s) are found in data
-    # False => Will raise IDAlreadyPresentError when duplicate(s) are found in data
-
-    # skip_absents
-    # True => Will not raise IDNotPResentError when ID cannot be found in data
-    # False => Will rise IDNotPresentError when ID was not found in data
-
-    # Add a single id
-    @quickdump
-    def add_id(self, value, skip_duplicates=False):
+    def _refresh(self):
+        self._dump()
+        self._reload()
+        
+    async def append(self, value, raise_=False):
         if value in self.data:
-            if not skip_duplicates:
-                raise IDAlreadyPresentError(value)
-        else:
-            self.data.append(value)
-            
-    # Add one or more ids from a iterator (list, set, iter...)
-    @quickdump
-    def add_ids(self, values, skip_duplicates=False):
-        for value in values:
-            if not skip_duplicates and value in self.data:
-                raise IDAlreadyPresentError(value)
-        self.data.extend(list(values))
-    
-    # Remove a single id
-    @quickdump
-    def remove_id(self, value, skip_absents=False):
-        if value not in self.data:
-            if not skip_absents:
-                raise IDNotPresentError(value)
-        else:
-            self.data.remove(value)
-    
-    # Remove one or more ids from a iterator (list, set, iter...)
-    @quickdump
-    def remove_ids(self, values, skip_absents=False):
-        for value in values:
-            if value not in self.data:
-                if skip_absents:
-                    raise IDNotPresentError(value)
-            else:
-                self.data.remove(value)
-    
-    def get_ids(self):
-        return self.data
+            if raise_:
+                raise ValueError(value)
+            return
+        
+        self.data.append(value)
 
-    def get_all_but(self, value):
-        result = list(self.data)
-        result.remove(value)
-        return result
+        await self.dump()
+        
+    async def extend(self, values, raise_=False):
+        filtered=[]
+        
+        for value in values:
+            if value in self.data:
+                if raise_:
+                    raise ValueError(value)
+                continue
+
+            filtered.append(value)
+        
+        self.data.extend(filtered)
+
+        await self.dump()
     
-    def contains(self, value):
+    async def remove(self, value, raise_=False):
+        try:
+            self.data.remove(value)
+        except ValueError:
+            if raise_:
+                raise
+
+        await self.dump()
+    
+    async def remove_multiple(self, values, raise_=False):
+        data=self.data
+        if raise_:
+            filtered=[]
+
+            for value in values:
+                if value in data:
+                    filtered.append(value)
+
+                raise ValueError(value)
+
+            for value in filtered:
+                data.remove(value)
+
+        else:
+            for value in values:
+                try:
+                    self.data.remove(value)
+                except ValueError:
+                    pass
+        
+        await self.dump()
+    
+    def __contains__(self, value):
         return value in self.data
 
+    def __iter__(self):
+        return self.data.__iter__()
+
+    def __reversed__(self):
+        return self.data.__reversed__()
+    
+    def __len__(self):
+        return self.data.__len__()
+    
 logging.info('Initializing Config Managers')
-BANNED_COMMANDS = IDManager(BANNED_COMMANDS_PATH, 'Banned Commands', 'Banned Commands Manager')
-CROSSLINK_IDS = IDManager(CROSSLINK_IDS_PATH, 'CrossLink IDs', 'CrossLink IDs Manager')
-MASTERS = IDManager(MASTERS_PATH, 'Master IDs', 'Master IDs Manager')
-OWNER_IDS = IDManager(OWNER_IDS_PATH, 'OIDs', 'OIDs Manager')
-SPOOF_IDS = IDManager(SPOOF_IDS_PATH, 'SPIDs', 'SPIDs Manager')
+
+BANNED_COMMANDS = IDManager(os.path.join(CONFIG_PATH, 'banned-commands.json'))
+CROSSLINK_IDS   = IDManager(os.path.join(CONFIG_PATH, 'crosslink-ids.json'))
+MASTERS         = IDManager(os.path.join(CONFIG_PATH, 'masters.json'))
+SPOOF_IDS       = IDManager(os.path.join(CONFIG_PATH, 'spoof-ids.json'))
+
 logging.info('Initialized Config Managers')

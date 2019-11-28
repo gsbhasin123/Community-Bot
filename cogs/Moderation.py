@@ -1,55 +1,49 @@
-import asyncio
+from hata import eventlist, Embed, sleep
+from hata.events import ContentParser
 
-import discord
+commands = eventlist()
 
-import json
+# check permissions before parsing
+@commands
+@ContentParser(
+    'condition, flags=r, default="not message.channel.permissions_for(message.author).can_ban_users"',
+    'condition, flags=r,default="not message.channel.cached_permissions_for(client).can_ban_users"',
+    'guild', 'user, flags=nma', 'rest') #can ban users, who arent at the guild, so use `a` flag
+async def ban(client, message, guild, user, reason):
+    await client.guild_ban_add(guild, user, reason=reason)
 
-import logging
+# check permissions before parsing
+@commands
+@ContentParser(
+    'condition, flags=r, default="not message.channel.permissions_for(message.author).can_kick_users"',
+    'condition, flags=r, default="not message.channel.cached_permissions_for(client).can_kick_users"',
+    'guild', 'user, flags=nmi', 'rest')
+async def kick(client, message, guild, user, reason):
+    await client.guild_user_delete(guild, user, reason=reason)
 
-from discord.ext import commands
+@commands
+@commands(case='purge')
+@ContentParser(
+    'condition, flags=gr, default="not message.channel.permissions_for(message.author).can_manage_messages"',
+    'int, default=1',)
+async def clear(client, message, amount):
+    if amount<0:
+        await client.message_create(message.channel, 'I can only delete positive amount of messages!')
+        return
 
-class moderation(commands.Cog):
+    with client.keep_typing(message.channel):
+        # returns if the client cannot delete messages
+        await client.message_delete_sequence(channel=message.channel,limit=amount)
 
-    def __init__(self, bot):
+    embed = Embed('Cleared messages', f'{amount} message(s) cleared\nSelf destructing after 3 seconds...', color=0x00ff00)
+    message = await client.message_create(message.channel,embed=embed)
+    await sleep(3.,client.loop)
+    await client.message_delete(message)
 
-        self.bot = bot
 
-        self.bot.remove_command("help")
 
-        logging.info("'Moderation' Cog has been loaded!")
 
-    @commands.command(name='ban', pass_context=True)
 
-    @commands.has_permissions(ban_members=True)
 
-    async def ban(self, ctx, member: discord.Member, *, reason):
 
-        await member.ban(reason=reason)
-
-    @commands.command(name='kick', pass_context=True)
-
-    @commands.has_permissions(kick_members=True)
-
-    async def kick(self, ctx, member: discord.Member, *, reason):
-
-        await member.kick(reason=reason)
-
-    @commands.command(name="clear", alias="purge")
-    @commands.has_permissions(manage_messages=True)
-    async def clear(self, ctx, amount=1):
-        """
-        Clear specific amount of messages in this channel
-        """
-        if amount < 0:
-            await ctx.send("I can only delete positive amount of messages!")
-            amount = 0
-        amount = amount + 1
-        await ctx.trigger_typing()
-        await ctx.channel.purge(limit=amount)
-        embed = discord.Embed(title="Cleared messages", description=f"{amount - 1} message(s) cleared\nSelf destructing after 3 seconds...", color=0x00ff00)
-        await ctx.send(embed=embed,delete_after=float(3))
-
-def setup(bot):
-
-    bot.add_cog(moderation(bot))
 
