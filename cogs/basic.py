@@ -50,6 +50,8 @@ def entry(client):
             return
         channel = ChannelText.precreate(int(stuff[1]))
         msg = message.content.replace('@','(a)')
+        msg = msg.replace(f'{stuff[0]} ','')
+        msg = msg.replace(f'{stuff[1]} ','')
         await client.message_create(channel, msg)
     
     client.events.message_create.append(CustomLinkCommand,channel)
