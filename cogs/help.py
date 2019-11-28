@@ -2,6 +2,7 @@ from hata import eventlist, Embed
 
 with open('help.txt','r') as file:
     HELP_MESSAGE=file.read()
+    file.close()
 
 HELP_MESSAGE='Note: Commands are not case sensitive\n'+HELP_MESSAGE
 
