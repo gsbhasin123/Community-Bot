@@ -3,7 +3,7 @@ import subprocess
 from hata import eventlist, alchemy_incendiary
 from hata.events import Cooldown
 
-from modules import config
+from cbmodules import config
 
 commands=eventlist()
 
