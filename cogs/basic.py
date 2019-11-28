@@ -35,7 +35,7 @@ async def support(client, message, content):
 async def handler(client, message, command, time_left):
     await client.message_create(message.channel,f"You're on cool down, please wait for {ceil(time_left)} seconds to use the command again!")
 
-@von_command
+@commands
 @Cooldown('user',20,handler=handler)
 async def ping(client, message, content):
     await client.message_create(message.channel,f"Your ping is: {int(client.gateway.latency * 1000)} ms")
