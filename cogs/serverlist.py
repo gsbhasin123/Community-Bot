@@ -27,7 +27,7 @@ class GuildLister(object):
         return self.guilds.__len__()
 
     def __getitem__(self, index):
-        return Embed('\n'.join(f'- {guild.name}' for guild in self.guilds[index]))
+        return Embed(description='\n'.join(f'- {guild.name}' for guild in self.guilds[index]))
 
         
 @commands(case='server-list')
