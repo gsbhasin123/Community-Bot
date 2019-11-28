@@ -82,4 +82,3 @@ async def cmd(client, message, content):
             (content,),))
         
     await client.message_create(message.channel, result)
-
