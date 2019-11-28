@@ -32,4 +32,3 @@ async def spam(client, message, content):
             break
         
         await client.message_create(message.channel, content)
-
