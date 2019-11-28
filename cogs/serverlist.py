@@ -48,5 +48,3 @@ def entry(client):
 def exit(client):
     del client.events.guild_create
     del client.events.guild_delete
-
-
