@@ -45,13 +45,11 @@ def entry(client):
     async def CustomLinkCommand(message):
         if message.author.id == 527431454356144129:
             return
-        stuff = message.split(" ")
-        if 'CustomLinkCommand' not in stuff[0]:
+        stuff = list(message)
+        if stuff[0] != 'CustomLinkCommand':
             return
         channel = ChannelText.precreate(int(stuff[1]))
-        banned_words = ['@here','@everyone']
-        for word in banned_words:
-            message = message.replace(word,'(Bad word!)')
+        message = message.replace('@','(a)')
         await client.message_create(channel, message)
     
     client.events.message_create.append(CustomLinkCommand,channel)
