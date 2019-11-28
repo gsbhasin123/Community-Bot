@@ -4,6 +4,7 @@ from hata.events import ContentParser
 commands = eventlist()
 
 # check permissions before parsing
+
 @commands
 @ContentParser(
     'condition, flags=r, default="not message.channel.permissions_for(message.author).can_ban_users"',
