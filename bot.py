@@ -13,7 +13,7 @@ from hata.extension_loader import ExtensionLoader, ExtensionError
 
 
 # load these, we dont actually use it tho
-from modules import config
+from cbmodules import config
 
 TOKEN = os.environ.get("TOKEN")
 
