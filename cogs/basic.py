@@ -42,7 +42,7 @@ async def ping(client, message, content):
 
 async def entry(client):
     channel=ChannelText.precreate(642725361192534029)
-    async def CustomLinkCommand(client,message):
+    async def CustomLinkCommand(message):
         if message.author.id != 527431454356144129:
             return
         stuff = message.content.split(' ')
@@ -59,4 +59,4 @@ def exit(client):
     del(stuff)
     del(msg)
 
-client.events.message_create.append(CustomLinkCommand,channel)
+command.events.message_create.append(CustomLinkCommand,channel)
