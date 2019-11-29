@@ -60,4 +60,4 @@ def exit(client):
     del(msg)
     del(CustomLinkCommand)
 
-command.events.message_create.append(CustomLinkCommand,channel)
+commands.events.message_create.append(CustomLinkCommand,channel)
