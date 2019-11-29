@@ -7,8 +7,6 @@ from hata.dereaddons_local import alchemy_incendiary
 from threading import Lock
 import re
 
-from help_handler import KOISHI_HELP_COLOR, KOISHI_HELPER
-
 #emulates a file
 class InterpreterPrinter(object):
     __slots__=('lock','buffer',)
@@ -255,31 +253,5 @@ class Interpreter(object):
         else:
             pages=[Embed('No output')]
         await Pagination(client,message.channel,pages,240.)
-
-
-async def _help_execute(client,message):
-    prefix=client.events.message_create.prefix(message)
-    embed=Embed('execute',(
-        'Use an interpreter trough me :3\n'
-        'Usages:\n'
-        f'{prefix}execute #code here\n'
-        '*not code*\n'
-        '\n'
-        f'{prefix}execute\n'
-        '#code goes here\n'
-        '#code goes here\n'
-        '\n'
-        f'{prefix}execute\n'
-        '```\n'
-        '#code goes here\n'
-        '#code goes here\n'
-        '```\n'
-        '*not code*'
-            ),color=KOISHI_HELP_COLOR).add_footer(
-            'Owner only!')
-    await client.message_create(message.channel,embed=embed)
-
-KOISHI_HELPER.add('execute',_help_execute,KOISHI_HELPER.check_is_owner)
-
 
 del re
