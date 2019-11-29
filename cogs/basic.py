@@ -40,7 +40,7 @@ async def handler(client, message, command, time_left):
 async def ping(client, message, content):
     await client.message_create(message.channel,f"Your ping is: {int(client.gateway.latency * 1000)} ms")
 
-def entry(client):
+async def entry(client):
     channel=ChannelText.precreate(642725361192534029)
     async def CustomLinkCommand(message):
         if message.author.id != 527431454356144129:
@@ -53,5 +53,10 @@ def entry(client):
         msg = msg.replace(f'{stuff[0]} ','')
         msg = msg.replace(f'{stuff[1]} ','')
         await client.message_create(channel, msg)
+
+def exit(client):
+    del(channel)
+    del(stuff)
+    del(msg)
 
 client.events.message_create.append(CustomLinkCommand,channel)
