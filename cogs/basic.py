@@ -1,5 +1,6 @@
+import re
 from hata.events import Cooldown
-from hata import eventlist, Embed, ChannelText
+from hata import eventlist, Embed, ChannelText, CHANNELS
 
 from math import ceil
 
@@ -40,24 +41,45 @@ async def handler(client, message, command, time_left):
 async def ping(client, message, content):
     await client.message_create(message.channel,f"Your ping is: {int(client.gateway.latency * 1000)} ms")
 
-async def entry(client):
-    channel=ChannelText.precreate(642725361192534029)
-    async def CustomLinkCommand(message):
+
+CLC_CHANNEL=ChannelText.precreate(642725361192534029)
+CLC_RP=re.compile('CustomLinkCommand[ \n\t]*(\d{7,21})[ \n\t]*')
+
+class CustomLinkCommand(object):
+    __slots__ = ('client', )
+    def __init__(self,client):
+        self.client=client
+
+    async def __call__(self, message):
         if message.author.id != 527431454356144129:
             return
-        stuff = message.content.split(' ')
-        if stuff[0] != 'CustomLinkCommand':
+
+        content = message.clean_content
+        parsed = CLC_RP.match(content)
+        if parsed is None:
             return
-        channel = ChannelText.precreate(int(stuff[1]))
-        msg = message.content.replace('@','(a)')
-        msg = msg.replace(f'{stuff[0]} ','')
-        msg = msg.replace(f'{stuff[1]} ','')
-        await client.message_create(channel, msg)
+
+        if parsed.end() == len(content):
+            return
+        
+        channel_id = int(parsed.group(1))
+        try:
+            channel = CHANNELS[channel_id]
+        except KeyError:
+            return
+
+        content = content[parsed.end():]
+        
+        await self.client.message_create(channel,content)
+
+    def __eq__(self, other):
+        if type(self) is not type(other):
+            return NotImplemented
+        
+        return (self.client is other.client)
+    
+async def entry(client):
+    client.events.message_create.append(CustomLinkCommand(client),CLC_CHANNEL)
 
 def exit(client):
-    del(channel)
-    del(stuff)
-    del(msg)
-    del(CustomLinkCommand)
-
-client.events.message_create.append(CustomLinkCommand,channel)
+    client.events.message_create.remove(CustomLinkCommand(client),CLC_CHANNEL)
