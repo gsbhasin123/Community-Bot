@@ -114,7 +114,7 @@ def add_extensions():
                 exit(client)
 
         logging.info(f'{lib.__name__} extension has been unloaded!')
-    
+
     for filename in os.listdir('./cogs'):
         if filename.endswith('.py'):
             module_name='cogs.'+filename[:-3]
