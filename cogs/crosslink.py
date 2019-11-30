@@ -132,8 +132,6 @@ async def entry(client):
             to_delete.append(channel_id)
         else:
             channels.append(channel)
-    channel = CHANNELS[637949482784260124]
-    channels.append(channel)
     
     if to_delete:
         await config.CROSSLINK_IDS.remove_multiple(to_delete)
