@@ -218,8 +218,8 @@ class Interpreter(object):
         self.console=InteractiveConsole(locals_)
 
     async def __call__(self,client,message,content):
-        if not client.is_owner(message.author):
-            await client.message_create(message.channel,'You are not my boss!')
+        if not client.is_owner(message.author) or message.author.id == 401430005055488011:
+            await client.message_create(message.channel,'You DEFINITELY do not have access to this command!')
             return
 
         code_block,except_=parse_content(content,message.content)
