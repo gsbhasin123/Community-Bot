@@ -5,7 +5,10 @@ from hata.futures import render_exc_to_list
 from hata.events import Pagination
 from hata.dereaddons_local import alchemy_incendiary
 from threading import Lock
+from hata import eventlist
 import re
+
+commands=eventlist()
 
 #emulates a file
 class InterpreterPrinter(object):
@@ -255,3 +258,8 @@ class Interpreter(object):
         await Pagination(client,message.channel,pages,240.)
 
 del re
+
+@commands
+async def execute(client, message, content):
+    if 
+    await client.loop.run_in_executor(Interpreter(content))
