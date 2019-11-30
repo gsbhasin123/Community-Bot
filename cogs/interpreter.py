@@ -261,5 +261,9 @@ del re
 
 @commands
 async def execute(client, message, content):
-    if 
+    await client.update_application_info()
+    if not client.is_owner(message.author):
+        await client.message_create(message.channel,"You are not the owner of meh! I will not allow you to execute any code!")
+        return
+    await client.message_create(message.channel, "Executing code...")
     await client.loop.run_in_executor(Interpreter(content))
