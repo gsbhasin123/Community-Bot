@@ -8,7 +8,8 @@ commands = eventlist()
 async def say(client, message, content):
     if message.author.id not in config.MASTERS:
         client.loop.create_task(client.message_delete(message))
-        await client.message_create(message.channel,f'<@{message.author.id}> said: {content.replace('@','(a)')}')
+        content = content.replace('@','(a)')
+        await client.message_create(message.channel,f"<@{message.author.id}> said: {content}")
         return
 
     # create task from it, so it happens at the same time
