@@ -13,6 +13,7 @@ from hata.extension_loader import ExtensionLoader, ExtensionError
 
 # load these, we dont actually use it tho
 from cbmodules import config
+from cbmodules.interpreter import Interpreter
 
 TOKEN = os.environ.get("TOKEN")
 
@@ -120,5 +121,7 @@ def add_extensions():
             EXTENSION_LOADER.add(module_name, entry_point=entry, exit_point=exit)
 
 add_extensions()
+
+on_command(Interpreter(locals().copy()),case='execute')
 
 start_clients()

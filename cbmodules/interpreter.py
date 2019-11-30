@@ -5,10 +5,7 @@ from hata.futures import render_exc_to_list
 from hata.events import Pagination
 from hata.dereaddons_local import alchemy_incendiary
 from threading import Lock
-from hata import eventlist
 import re
-
-commands=eventlist()
 
 #emulates a file
 class InterpreterPrinter(object):
@@ -259,11 +256,3 @@ class Interpreter(object):
 
 del re
 
-@commands
-async def execute(client, message, content):
-    await client.update_application_info()
-    if not client.is_owner(message.author):
-        await client.message_create(message.channel,"You are not the owner of meh! I will not allow you to execute any code!")
-        return
-    await client.message_create(message.channel, "Executing code...")
-    await client.loop.run_in_executor(InterpreterPrinter(content))
