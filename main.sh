@@ -1,1 +1,1 @@
-python3 start.py
+cd stuff && python3 start.py
