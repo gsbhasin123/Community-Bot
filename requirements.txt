@@ -1,6 +1,0 @@
-flask
-sqlalchemy
-youtube-dl
-leonardo-team
-utils
-xiangcheck
