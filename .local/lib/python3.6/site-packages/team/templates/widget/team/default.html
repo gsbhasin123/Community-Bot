@@ -1,0 +1,30 @@
+{% extends widget.get_base_template %}
+
+{% load i18n %}
+{% load thumbnail %}
+{% load leonardo_tags %}
+
+{% block content %}
+
+<section>
+    <div>
+        <ol class="row-fluid">
+			{% for object in widget.get_team %}
+				{% thumbnail object.photo "250x250" crop="center" format="PNG" as image %}
+					<div class="col-lg-3 col-md-4 col-xs-6 {% if forloop.counter0|divisibleby:"4" %}no-margin{% endif %}">
+						<a data-title="{{ object.full_name }}" data-footer="{{ object.description }}" data-toggle="lightbox" id="user_{{ object.id }}" href="{{ object.get_absolute_url }}">
+							<img src="{{ image.url }}" alt="{{ object.summary }}">
+						</a>
+					</div>
+				{% endthumbnail %}
+            {% endfor %}
+        </ol>
+    </div>
+</section>
+<script type="text/javascript">
+$(document).delegate('*[data-toggle="lightbox"]', 'click', function(event) {
+    event.preventDefault();
+    $(this).ekkoLightbox();
+}); 
+</script>
+{% endblock %}

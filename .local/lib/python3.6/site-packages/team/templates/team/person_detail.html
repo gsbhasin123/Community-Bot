@@ -1,0 +1,35 @@
+{% load i18n %}
+{% load thumbnail %}
+
+{% block content %}
+<div class="modal-body clearfix team-detail">
+	<div class="object-image" style="float:left;">
+		{% if object.photo and object.photo != '' %}
+		<div class="team-detail-wrapper">
+			{% thumbnail object.photo "150x300"  format="PNG" as image %}
+				<img src="{{ image.url }}" alt="{{ object.full_name }}" />
+			{% endthumbnail %}
+		</div>
+		{% endif %}
+	</div>
+		
+	<h2><span>{{ object.full_name }}</span></h2>
+	<h3></span> {{ object.translation.position }}</h3>
+	<div class="object-text object-text-bottom team-desc">
+		{{ object.translation.description|safe }}
+	</div>
+
+	<div class="contacts">
+		{% for contact in object.contacts.all %}
+			<a class="social-links" href="{{ contact.url }}"><div class="{{ contact.engine }} social"></div></a>
+		{% endfor %}
+	</div>
+
+</div>
+<script type="text/javascript">
+	$(document).ready(function() {
+				$(".{{ object|slugify }}").css("-webkit-filter", "grayscale(0%)");
+				$(".{{ object|slugify }}").css("filter", "none");
+	});
+</script>
+{% endblock %}

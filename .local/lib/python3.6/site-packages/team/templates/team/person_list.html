@@ -1,0 +1,61 @@
+
+{% load i18n %}
+{% load thumbnail %}
+{% load leonardo_tags %}
+
+{% block content %}
+<div class="team-list">
+	<div>
+		{% for object in object_list %}
+		{% if object.category == '0' %} 
+		<div class="object-image" style="float:left;">
+			{% if object.photo and object.photo != '' %}
+			{% thumbnail object.photo "308x308" crop="center" format="PNG" as image %}
+			<img alt="{{ object }}" src="{{ image.url }}" />
+			{% endthumbnail %}
+			{% else %}
+			{% thumbnail request.webcms_options.no_image "308x308" crop="center" format="PNG" as image %}
+			<img alt="{{ object }}" src="{{ image.url }}" />
+			{% endthumbnail %}
+			{% endif %}
+			<h4><a data-title="{{ object }}" data-footer="{{ object.summary }}" data-toggle="lightbox" id="user_{{ object.id }}" href="{{ object.get_absolute_url }}">{{ object.full_name }}</a> / {{ object.translation.position }}</h4>
+			{% if object.translation.summary %}
+			<div class="object-text">
+				{{ object.translation.summary|safe }}
+			</div>
+			{% endif %}
+		</div>
+		{% endif %}
+		{% endfor %}
+	</div>
+	<div>
+		{% for object in object_list %}
+		{% if object.category == '1' %} 
+		<div class="object-image" style="float:left;">
+			{% if object.photo and object.photo != '' %}
+			{% thumbnail object.photo "229x229" crop="center" format="PNG" as image %}
+			<img alt="{{ object }}" src="{{ image.url }}" />
+			{% endthumbnail %}
+			{% else %}
+			{% thumbnail request.webcms_options.no_image "229x229" crop="center" format="PNG" as image %}
+			<img alt="{{ object }}" src="{{ image.url }}" />
+			{% endthumbnail %}
+			{% endif %}
+			<h4><a data-title="{{ object }}" data-footer="{{ object.summary }}" data-toggle="lightbox" id="user_{{ object.id }}" href="{{ object.get_absolute_url }}">{{ object.full_name }}</a> / {{ object.translation.position }}</h4>
+			{% if object.translation.summary %}
+			<div class="object-text">
+				{{ object.translation.summary|safe }}
+			</div>
+			{% endif %}
+		</div>
+		{% endif %}
+		{% endfor %}
+	<div>
+</div>
+<script type="text/javascript">
+$(document).delegate('*[data-toggle="lightbox"]', 'click', function(event) {
+    event.preventDefault();
+    $(this).ekkoLightbox();
+}); 
+</script>
+{% endblock %}
