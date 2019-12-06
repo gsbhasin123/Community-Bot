@@ -1,6 +1,8 @@
 cogs/__pycache__/**
+hata/__pycache__/**
 .vscode/**
 token.txt
 __pycache__/**
 .env
-
+pyproject.toml
+poetry.lock
