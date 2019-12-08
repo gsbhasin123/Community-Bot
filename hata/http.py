@@ -212,13 +212,13 @@ class URLS:
     def webhook_url(webhook):
         return f'{API_ENDPOINT}/webhooks/{webhook.id}/{webhook.token}'
 
-    webhook_urlpattern=re.compile('discordapp.com/api/webhooks/(?P<id>[0-9]{17,21})/(?P<token>[A-Za-z0-9\.\-\_]{60,68})')
+    webhook_urlpattern=re.compile('(?:https://)?discordapp.com/api/(?:v\d/)?webhooks/([0-9]{17,21})/([a-zA-Z0-9\.\-\_]{60,68})(?:/.*)?')
 
     def webhook_avatar_url(webhook):
         avatar=webhook.avatar
         if not avatar:
             #default avatar
-            return '{CDN_ENDPOINT}/embed/avatars/0.png'
+            return f'{CDN_ENDPOINT}/embed/avatars/0.png'
             
         return f'{CDN_ENDPOINT}/avatars/{webhook.id}/{avatar:0>32x}.png'
         
@@ -820,160 +820,153 @@ class DiscordHTTPClient(object):
 
     #client
     
-    def client_edit(self,data):
-        return self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,59136),METH_PATCH,
+    async def client_edit(self,data):
+        return await self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,59136),METH_PATCH,
             f'{API_ENDPOINT}/users/@me',data)
 
-    def client_edit_nick(self,guild_id,data,reason):
-        return self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,48384),METH_PATCH,
+    async def client_edit_nick(self,guild_id,data,reason):
+        return await self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,48384),METH_PATCH,
             f'{API_ENDPOINT}/guilds/{guild_id}/members/@me/nick',data,reason=reason)
 
-    def client_user(self):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
+    async def client_user(self):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
             f'{API_ENDPOINT}/users/@me')
 
     #hooman only
-    def client_get_settings(self):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
+    async def client_get_settings(self):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
             f'{API_ENDPOINT}/users/@me/settings')
     
     #hooman only
-    def client_edit_settings(self,data):
+    async def client_edit_settings(self,data):
         return self.request(ratelimit_handler.unlimited(self.loop),METH_PATCH,
             f'{API_ENDPOINT}/users/@me/settings',data=data)
 
-    def client_logout(self):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_POST,
+    async def client_logout(self):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_POST,
             f'{API_ENDPOINT}/auth/logout')
 
-    def guild_get_all(self,data):
-        return self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,62720),METH_GET,
+    async def guild_get_all(self,data):
+        return await self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,62720),METH_GET,
             f'{API_ENDPOINT}/users/@me/guilds',params=data)
 
-    def channel_private_get_all(self):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
+    async def channel_private_get_all(self):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
             f'{API_ENDPOINT}/users/@me/channels')
 
     #hooman only
-    def client_gateway_hooman(self):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
+    async def client_gateway_hooman(self):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
             f'{API_ENDPOINT}/gateway')
 
     #bot only
-    def client_gateway_bot(self):
-        return self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,41216),METH_GET,
+    async def client_gateway_bot(self):
+        return await self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,41216),METH_GET,
             f'{API_ENDPOINT}/gateway/bot')
     
     #bot only
-    def client_application_info(self):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
+    async def client_application_info(self):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
             f'{API_ENDPOINT}/oauth2/applications/@me')
 
-    def client_connections(self):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
+    async def client_connections(self):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
             f'{API_ENDPOINT}/users/@me/connections')
 
     #oauth2
     
-    def oauth2_token(self,data): #UNLIMITED
+    async def oauth2_token(self,data): #UNLIMITED
         header=multidict_titled()
         dict.__setitem__(header,CONTENT_TYPE,['application/x-www-form-urlencoded'])
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_POST,
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_POST,
             f'{DIS_ENDPOINT}/api/oauth2/token',data,header=header)
     
-    def user_info(self,header):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
+    async def user_info(self,header):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
             f'{API_ENDPOINT}/users/@me',header=header)
     
-
-    def user_connections(self,header):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
+    async def user_connections(self,header):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
             f'{API_ENDPOINT}/users/@me/connections',header=header)
 
-    def guild_user_add(self,guild_id,user_id,data):
-        return self.request(ratelimit_handler(self.loop,guild_id,53760),METH_PUT,
+    async def guild_user_add(self,guild_id,user_id,data):
+        return await self.request(ratelimit_handler(self.loop,guild_id,53760),METH_PUT,
             f'{API_ENDPOINT}/guilds/{guild_id}/members/{user_id}',data)
         
-    def user_guilds(self,header):
-        return self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,60928),METH_GET,
+    async def user_guilds(self,header):
+        return await self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,60928),METH_GET,
             f'{API_ENDPOINT}/users/@me/guilds',header=header)
     
     #channel
-    def channel_private_create(self,data):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_POST,
+    async def channel_private_create(self,data):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_POST,
             f'{API_ENDPOINT}/users/@me/channels',data)
 
-    def channel_group_create(self,user_id,data):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_POST,
+    async def channel_group_create(self,user_id,data):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_POST,
             f'{API_ENDPOINT}/users/{user_id}/channels',data)        
 
-    def channel_group_leave(self,channel_id):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_DELETE,
+    async def channel_group_leave(self,channel_id):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_DELETE,
             f'{API_ENDPOINT}/channels/{channel_id}')
 
-    def channel_group_user_add(self,channel_id,user_id):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_PUT,
+    async def channel_group_user_add(self,channel_id,user_id):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_PUT,
             f'{API_ENDPOINT}/channels/{channel_id}/recipients/{user_id}')
 
-    def channel_group_user_delete(self,channel_id,user_id):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_DELETE,
+    async def channel_group_user_delete(self,channel_id,user_id):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_DELETE,
             f'{API_ENDPOINT}/channels/{channel_id}/recipients/{user_id}')
 
-    def channel_group_edit(self,channel_id,data):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_PATCH,
+    async def channel_group_edit(self,channel_id,data):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_PATCH,
             f'{API_ENDPOINT}/channels/{channel_id}',data)
-
-    #found in discord.py rewrite, dunno what it does, could not even find
-    #so the http wont even get this feature
-    #def channel_group_convert(self,channel_id):
-    #    return self.request(ratelimit_handler.unlimited(self.loop),METH_POST,
-    #        f'{API_ENDPOINT}/channels/{channel_id}/convert')
     
-    def channel_move(self,guild_id,data,reason):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_PATCH,
+    async def channel_move(self,guild_id,data,reason):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_PATCH,
             f'{API_ENDPOINT}/guilds/{guild_id}/channels',data,reason=reason)
 
-    def channel_edit(self,channel_id,data,reason):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_PATCH,
+    async def channel_edit(self,channel_id,data,reason):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_PATCH,
             f'{API_ENDPOINT}/channels/{channel_id}',data,reason=reason)
 
-    def channel_create(self,guild_id,data,reason):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_POST,
+    async def channel_create(self,guild_id,data,reason):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_POST,
             f'{API_ENDPOINT}/guilds/{guild_id}/channels',data,reason=reason)
 
-    def channel_delete(self,channel_id,reason):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_DELETE,
+    async def channel_delete(self,channel_id,reason):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_DELETE,
             f'{API_ENDPOINT}/channels/{channel_id}',reason=reason)
 
-    def channel_follow(self,channel_id,data):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_POST,
+    async def channel_follow(self,channel_id,data):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_POST,
             f'{API_ENDPOINT}/channels/{channel_id}/followers',data)
 
-    def permission_ow_create(self,channel_id,overwrite_id,data,reason):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_PUT,
+    async def permission_ow_create(self,channel_id,overwrite_id,data,reason):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_PUT,
             f'{API_ENDPOINT}/channels/{channel_id}/permissions/{overwrite_id}',data,reason=reason)
 
-    def permission_ow_delete(self,channel_id,overwrite_id,reason):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_DELETE,
+    async def permission_ow_delete(self,channel_id,overwrite_id,reason):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_DELETE,
             f'{API_ENDPOINT}/channels/{channel_id}/permissions/{overwrite_id}',reason=reason)
 
     #messages
 
     #hooman only
-    def message_mar(self,channel_id,message_id,data):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_POST,
+    async def message_mar(self,channel_id,message_id,data):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_POST,
             f'{API_ENDPOINT}/channels/{channel_id}/messages/{message_id}/ack',data)
 
-    def message_get(self,channel_id,message_id):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
+    async def message_get(self,channel_id,message_id):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
             f'{API_ENDPOINT}/channels/{channel_id}/messages/{message_id}')
 
-    def message_logs(self,channel_id,data):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
+    async def message_logs(self,channel_id,data):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
             f'{API_ENDPOINT}/channels/{channel_id}/messages',params=data)
 
-    def message_create(self,channel_id,data):
-        return self.request(ratelimit_handler(self.loop,channel_id,28672),METH_POST,
+    async def message_create(self,channel_id,data):
+        return await self.request(ratelimit_handler(self.loop,channel_id,28672),METH_POST,
             f'{API_ENDPOINT}/channels/{channel_id}/messages',data)
 
     async def message_delete(self,channel_id,message_id,reason):
@@ -986,371 +979,371 @@ class DiscordHTTPClient(object):
                 return
             raise
             
-    def message_delete_multiple(self,channel_id,data,reason):
-        return self.request(ratelimit_handler(self.loop,channel_id,30464),METH_POST,
+    async def message_delete_multiple(self,channel_id,data,reason):
+        return await self.request(ratelimit_handler(self.loop,channel_id,30464),METH_POST,
             f'{API_ENDPOINT}/channels/{channel_id}/messages/bulk_delete',data,reason=reason)
 
-    def message_edit(self,channel_id,message_id,data):
-        return self.request(ratelimit_handler(self.loop,channel_id,32256),METH_PATCH,
+    async def message_edit(self,channel_id,message_id,data):
+        return await self.request(ratelimit_handler(self.loop,channel_id,32256),METH_PATCH,
             f'{API_ENDPOINT}/channels/{channel_id}/messages/{message_id}',data)
 
-    def message_suppress_embeds(self,channel_id,message_id,data):
-        return self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,73472),METH_POST,
+    async def message_suppress_embeds(self,channel_id,message_id,data):
+        return await self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,73472),METH_POST,
             f'{API_ENDPOINT}/channels/{channel_id}/messages/{message_id}/suppress-embeds',data)
 
-    def message_pin(self,channel_id,message_id):
-        return self.request(ratelimit_handler(self.loop,channel_id,34048),METH_PUT,
+    async def message_pin(self,channel_id,message_id):
+        return await self.request(ratelimit_handler(self.loop,channel_id,34048),METH_PUT,
             f'{API_ENDPOINT}/channels/{channel_id}/pins/{message_id}')
 
-    def message_unpin(self,channel_id,message_id):
-        return self.request(ratelimit_handler(self.loop,channel_id,34048),METH_DELETE,
+    async def message_unpin(self,channel_id,message_id):
+        return await self.request(ratelimit_handler(self.loop,channel_id,34048),METH_DELETE,
             f'{API_ENDPOINT}/channels/{channel_id}/pins/{message_id}')
 
-    def channel_pins(self,channel_id):
-        return self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,35840),METH_GET,
+    async def channel_pins(self,channel_id):
+        return await self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,35840),METH_GET,
             f'{API_ENDPOINT}/channels/{channel_id}/pins')
 
     #typing
     
-    def typing(self,channel_id):
-        return self.request(ratelimit_handler(self.loop,channel_id,37632),METH_POST,
+    async def typing(self,channel_id):
+        return await self.request(ratelimit_handler(self.loop,channel_id,37632),METH_POST,
             f'{API_ENDPOINT}/channels/{channel_id}/typing')
 
     #reactions
 
-    def reaction_add(self,channel_id,message_id,reaction):
-        return self.request(ratelimit_handler(self.loop,channel_id,26880),METH_PUT,
+    async def reaction_add(self,channel_id,message_id,reaction):
+        return await self.request(ratelimit_handler(self.loop,channel_id,26880),METH_PUT,
             f'{API_ENDPOINT}/channels/{channel_id}/messages/{message_id}/reactions/{reaction}/@me')
             
-    def reaction_delete(self,channel_id,message_id,reaction,user_id):
-        return self.request(ratelimit_handler(self.loop,channel_id,26880),METH_DELETE,
+    async def reaction_delete(self,channel_id,message_id,reaction,user_id):
+        return await self.request(ratelimit_handler(self.loop,channel_id,26880),METH_DELETE,
             f'{API_ENDPOINT}/channels/{channel_id}/messages/{message_id}/reactions/{reaction}/{user_id}')
 
-    def reaction_delete_own(self,channel_id,message_id,reaction):
-        return self.request(ratelimit_handler(self.loop,channel_id,26880),METH_DELETE,
+    async def reaction_delete_own(self,channel_id,message_id,reaction):
+        return await self.request(ratelimit_handler(self.loop,channel_id,26880),METH_DELETE,
             f'{API_ENDPOINT}/channels/{channel_id}/messages/{message_id}/reactions/{reaction}/@me')
 
-    def reaction_clear(self,channel_id,message_id):
-        return self.request(ratelimit_handler(self.loop,channel_id,26880),METH_DELETE,
+    async def reaction_clear(self,channel_id,message_id):
+        return await self.request(ratelimit_handler(self.loop,channel_id,26880),METH_DELETE,
             f'{API_ENDPOINT}/channels/{channel_id}/messages/{message_id}/reactions')
 
-    def reaction_users(self,channel_id,message_id,reaction,data):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
+    async def reaction_users(self,channel_id,message_id,reaction,data):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
             f'{API_ENDPOINT}/channels/{channel_id}/messages/{message_id}/reactions/{reaction}',params=data)
 
     #guild
     
-    def guild_get(self,guild_id):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
+    async def guild_get(self,guild_id):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
             f'{API_ENDPOINT}/guilds/{guild_id}')
 
-    def guild_user_delete(self,guild_id,user_id,reason):
-        return self.request(ratelimit_handler(self.loop,guild_id,50176),METH_DELETE,
+    async def guild_user_delete(self,guild_id,user_id,reason):
+        return await self.request(ratelimit_handler(self.loop,guild_id,50176),METH_DELETE,
             f'{API_ENDPOINT}/guilds/{guild_id}/members/{user_id}',reason)
 
-    def guild_ban_add(self,guild_id,user_id,data,reason):
-        if reason:
+    async def guild_ban_add(self,guild_id,user_id,data,reason):
+        if (reason is not None) and reason:
             data['reason']=quote(reason)
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_PUT,
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_PUT,
             f'{API_ENDPOINT}/guilds/{guild_id}/bans/{user_id}',params=data)
 
-    def guild_ban_delete(self,guild_id,user_id,reason):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_DELETE,
+    async def guild_ban_delete(self,guild_id,user_id,reason):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_DELETE,
             f'{API_ENDPOINT}/guilds/{guild_id}/bans/{user_id}',reason=reason)
 
-    def user_edit(self,guild_id,user_id,data,reason):
-        return self.request(ratelimit_handler(self.loop,guild_id,51968),METH_PATCH,
+    async def user_edit(self,guild_id,user_id,data,reason):
+        return await self.request(ratelimit_handler(self.loop,guild_id,51968),METH_PATCH,
             f'{API_ENDPOINT}/guilds/{guild_id}/members/{user_id}',data,reason=reason)
 
     #hooman only
-    def guild_mar(self,guild_id,data):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_POST,
+    async def guild_mar(self,guild_id,data):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_POST,
             f'{API_ENDPOINT}/guilds/{guild_id}/ack',data)
 
-    def guild_leave(self,guild_id):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_DELETE,
+    async def guild_leave(self,guild_id):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_DELETE,
             f'{API_ENDPOINT}/users/@me/guilds/{guild_id}')
 
-    def guild_delete(self,guild_id):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_DELETE,
+    async def guild_delete(self,guild_id):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_DELETE,
             f'{API_ENDPOINT}/guilds/{guild_id}')
 
-    def guild_create(self,data):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_POST,
+    async def guild_create(self,data):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_POST,
             f'{API_ENDPOINT}/guilds',data)
 
-    def guild_prune(self,guild_id,data,reason):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_POST,
+    async def guild_prune(self,guild_id,data,reason):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_POST,
             f'{API_ENDPOINT}/guilds/{guild_id}/prune',params=data,reason=reason)
 
-    def guild_prune_estimate(self,guild_id,data):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
+    async def guild_prune_estimate(self,guild_id,data):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
             f'{API_ENDPOINT}/guilds/{guild_id}/prune',params=data)
 
-    def guild_edit(self,guild_id,data,reason):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_PATCH,
+    async def guild_edit(self,guild_id,data,reason):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_PATCH,
             f'{API_ENDPOINT}/guilds/{guild_id}',data,reason=reason)
 
-    def guild_bans(self,guild_id):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
+    async def guild_bans(self,guild_id):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
             f'{API_ENDPOINT}/guilds/{guild_id}/bans')
 
-    def guild_ban_get(self,guild_id,user_id):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
+    async def guild_ban_get(self,guild_id,user_id):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
             f'{API_ENDPOINT}/guilds/{guild_id}/bans/{user_id}')
     
-    def vanity_get(self,guild_id):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
+    async def vanity_get(self,guild_id):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
             f'{API_ENDPOINT}/guilds/{guild_id}/vanity-url')
 
-    def vanity_edit(self,guild_id,data,reason):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_PATCH,
+    async def vanity_edit(self,guild_id,data,reason):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_PATCH,
             f'{API_ENDPOINT}/guilds/{guild_id}/vanity-url',data,reason=reason)
 
-    def audit_logs(self,guild_id,data):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
+    async def audit_logs(self,guild_id,data):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
             f'{API_ENDPOINT}/guilds/{guild_id}/audit-logs',params=data)
 
-    def user_role_add(self,guild_id,user_id,role_id,reason):
-        return self.request(ratelimit_handler(self.loop,guild_id,55552),METH_PUT,
+    async def user_role_add(self,guild_id,user_id,role_id,reason):
+        return await self.request(ratelimit_handler(self.loop,guild_id,55552),METH_PUT,
             f'{API_ENDPOINT}/guilds/{guild_id}/members/{user_id}/roles/{role_id}',reason=reason)
 
-    def user_role_delete(self,guild_id,user_id,role_id,reason):
-        return self.request(ratelimit_handler(self.loop,guild_id,55552),METH_DELETE,
+    async def user_role_delete(self,guild_id,user_id,role_id,reason):
+        return await self.request(ratelimit_handler(self.loop,guild_id,55552),METH_DELETE,
             f'{API_ENDPOINT}/guilds/{guild_id}/members/{user_id}/roles/{role_id}',reason=reason)
 
-    def user_move(self,guild_id,user_id,data):
-        return self.request(ratelimit_handler(self.loop,guild_id,51968),METH_PATCH,
+    async def user_move(self,guild_id,user_id,data):
+        return await self.request(ratelimit_handler(self.loop,guild_id,51968),METH_PATCH,
             f'{API_ENDPOINT}/guilds/{guild_id}/members/{user_id}',data)
 
-    def integration_get_all(self,guild_id):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
+    async def integration_get_all(self,guild_id):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
             f'{API_ENDPOINT}/guilds/{guild_id}/integrations')
 
-    def integration_create(self,guild_id,data):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_POST,
+    async def integration_create(self,guild_id,data):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_POST,
             f'{API_ENDPOINT}/guilds/{guild_id}/integrations',data)
 
-    def integration_edit(self,guild_id,integration_id,data):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_PATCH,
+    async def integration_edit(self,guild_id,integration_id,data):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_PATCH,
             f'{API_ENDPOINT}/guilds/{guild_id}/integrations/{integration_id}',data)
 
-    def integration_delete(self,guild_id,integration_id):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_DELETE,
+    async def integration_delete(self,guild_id,integration_id):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_DELETE,
             f'{API_ENDPOINT}/guilds/{guild_id}/integrations/{integration_id}')
 
-    def integration_sync(self,guild_id,integration_id):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_POST,
+    async def integration_sync(self,guild_id,integration_id):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_POST,
             f'{API_ENDPOINT}/guilds/{guild_id}/integrations/{integration_id}/sync')
 
-    def guild_embed_get(self,guild_id):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
+    async def guild_embed_get(self,guild_id):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
             f'{API_ENDPOINT}/guilds/{guild_id}/embed')
 
-    def guild_embed_edit(self,guild_id,data):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_PATCH,
+    async def guild_embed_edit(self,guild_id,data):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_PATCH,
             f'{API_ENDPOINT}/guilds/{guild_id}/embed',data)
 
-    def guild_widget_get(self,guild_id):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
+    async def guild_widget_get(self,guild_id):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
             f'{API_ENDPOINT}/guilds/{guild_id}/widget.json',header={})
     
-    def guild_users(self,guild_id,data):
-        return self.request(ratelimit_handler(self.loop,guild_id,68096),METH_GET,
+    async def guild_users(self,guild_id,data):
+        return await self.request(ratelimit_handler(self.loop,guild_id,68096),METH_GET,
             f'{API_ENDPOINT}/guilds/{guild_id}/members',params=data)
 
-    def guild_regions(self,guild_id):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
+    async def guild_regions(self,guild_id):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
             f'{API_ENDPOINT}/guilds/{guild_id}/regions')
 
-    def guild_channels(self,guild_id):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
+    async def guild_channels(self,guild_id):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
             f'{API_ENDPOINT}/guilds/{guild_id}/channels')
 
-    def guild_roles(self,guild_id):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
+    async def guild_roles(self,guild_id):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
             f'{API_ENDPOINT}/guilds/{guild_id}/roles')
 
     #invite
 
-    def invite_create(self,channel_id,data):
-        return self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,39424),METH_POST,
+    async def invite_create(self,channel_id,data):
+        return await self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,39424),METH_POST,
             f'{API_ENDPOINT}/channels/{channel_id}/invites',data)
     
-    def invite_get(self,invite_code,data):
-        return self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,57344),METH_GET,
+    async def invite_get(self,invite_code,data):
+        return await self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,57344),METH_GET,
             f'{API_ENDPOINT}/invites/{invite_code}',params=data)
 
-    def invite_get_guild(self,guild_id):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
+    async def invite_get_guild(self,guild_id):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
             f'{API_ENDPOINT}/guilds/{guild_id}/invites')
     
-    def invite_get_channel(self,channel_id):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
+    async def invite_get_channel(self,channel_id):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
             f'{API_ENDPOINT}/channels/{channel_id}/invites')
 
-    def invite_delete(self,invite_code,reason):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_DELETE,
+    async def invite_delete(self,invite_code,reason):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_DELETE,
             f'{API_ENDPOINT}/invites/{invite_code}',reason=reason)
 
 
     #role
 
-    def role_edit(self,guild_id,role_id,data,reason):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_PATCH,
+    async def role_edit(self,guild_id,role_id,data,reason):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_PATCH,
             f'{API_ENDPOINT}/guilds/{guild_id}/roles/{role_id}',data,reason=reason)
 
-    def role_delete(self,guild_id,role_id,reason):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_DELETE,
+    async def role_delete(self,guild_id,role_id,reason):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_DELETE,
             f'{API_ENDPOINT}/guilds/{guild_id}/roles/{role_id}',reason=reason)
 
-    def role_create(self,guild_id,data,reason):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_POST,
+    async def role_create(self,guild_id,data,reason):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_POST,
             f'{API_ENDPOINT}/guilds/{guild_id}/roles',data,reason=reason)
 
-    def role_move(self,guild_id,data,reason):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_PATCH,
+    async def role_move(self,guild_id,data,reason):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_PATCH,
             f'{API_ENDPOINT}/guilds/{guild_id}/roles',data,reason=reason)
 
     #emoji
 
-    def emoji_get(self,guild_id,emoji_id):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
+    async def emoji_get(self,guild_id,emoji_id):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
             f'{API_ENDPOINT}/guilds/{guild_id}/emojis/{emoji_id}')
 
-    def guild_emojis(self,guild_id):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
+    async def guild_emojis(self,guild_id):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
             f'{API_ENDPOINT}/guilds/{guild_id}/emojis')
         
-    def emoji_edit(self,guild_id,emoji_id,data,reason):
-        return self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,46592),METH_PATCH,
+    async def emoji_edit(self,guild_id,emoji_id,data,reason):
+        return await self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,46592),METH_PATCH,
             f'{API_ENDPOINT}/guilds/{guild_id}/emojis/{emoji_id}',data,reason=reason)
 
-    def emoji_create(self,guild_id,data,reason):
-        return self.request(ratelimit_handler(self.loop,guild_id,43008),METH_POST,
+    async def emoji_create(self,guild_id,data,reason):
+        return await self.request(ratelimit_handler(self.loop,guild_id,43008),METH_POST,
             f'{API_ENDPOINT}/guilds/{guild_id}/emojis',data,reason=reason)
 
-    def emoji_delete(self,guild_id,emoji_id,reason):
-        return self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,44800),METH_DELETE,
+    async def emoji_delete(self,guild_id,emoji_id,reason):
+        return await self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,44800),METH_DELETE,
             f'{API_ENDPOINT}/guilds/{guild_id}/emojis/{emoji_id}',reason=reason)
 
     #relations
 
-    def relationship_delete(self,user_id):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_DELETE,
+    async def relationship_delete(self,user_id):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_DELETE,
             f'{API_ENDPOINT}/users/@me/relationships/{user_id}')
 
-    def relationship_create(self,user_id,data):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_PUT,
+    async def relationship_create(self,user_id,data):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_PUT,
             f'{API_ENDPOINT}/users/@me/relationships/{user_id}',data)
 
-    def relationship_friend_request(self,data):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_POST,
+    async def relationship_friend_request(self,data):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_POST,
             f'{API_ENDPOINT}/users/@me/relationships',data)
 
     #webhook
     
-    def webhook_create(self,channel_id,data):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_POST,
+    async def webhook_create(self,channel_id,data):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_POST,
             f'{API_ENDPOINT}/channels/{channel_id}/webhooks',data)
 
-    def webhook_get(self,webhook_id):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
+    async def webhook_get(self,webhook_id):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
             f'{API_ENDPOINT}/webhooks/{webhook_id}')
 
-    def webhook_get_channel(self,channel_id):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
+    async def webhook_get_channel(self,channel_id):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
             f'{API_ENDPOINT}/channels/{channel_id}/webhooks')
 
-    def webhook_get_guild(self,guild_id):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
+    async def webhook_get_guild(self,guild_id):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
             f'{API_ENDPOINT}/guilds/{guild_id}/webhooks')
     
-    def webhook_get_token(self,webhook):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
+    async def webhook_get_token(self,webhook):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
             webhook.url,header={})
     
-    def webhook_delete_token(self,webhook):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_DELETE,
+    async def webhook_delete_token(self,webhook):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_DELETE,
             webhook.url,header={})
 
-    def webhook_delete(self,webhook_id):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_DELETE,
+    async def webhook_delete(self,webhook_id):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_DELETE,
             f'{API_ENDPOINT}/webhooks/{webhook_id}')
 
-    def webhook_edit_token(self,webhook,data):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_PATCH,
+    async def webhook_edit_token(self,webhook,data):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_PATCH,
             webhook.url,data,header={})
 
-    def webhook_edit(self,webhook_id,data):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_PATCH,
+    async def webhook_edit(self,webhook_id,data):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_PATCH,
             f'{API_ENDPOINT}/webhooks/{webhook_id}',data)
 
-    def webhook_send(self,webhook,data,wait):
-        return self.request(ratelimit_handler(self.loop,webhook.id,66304),METH_POST,
+    async def webhook_send(self,webhook,data,wait):
+        return await self.request(ratelimit_handler(self.loop,webhook.id,66304),METH_POST,
             f'{webhook.url}?wait={wait:d}',data,header={})
     
     #user
 
-    def user_get(self,user_id):
-        return self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,64512),METH_GET,
+    async def user_get(self,user_id):
+        return await self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,64512),METH_GET,
             f'{API_ENDPOINT}/users/{user_id}')
 
-    def guild_user_get(self,guild_id,user_id):
-        return self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,69888),METH_GET,
+    async def guild_user_get(self,guild_id,user_id):
+        return await self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,69888),METH_GET,
             f'{API_ENDPOINT}/guilds/{guild_id}/members/{user_id}')
     
     #hooman only
-    def user_profle(self,user_id):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
+    async def user_profile(self,user_id):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
             f'{API_ENDPOINT}/users/{user_id}/profile')
 
 
     #hypesquad
 
-    def hypesquad_house_change(self,data):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_POST,
+    async def hypesquad_house_change(self,data):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_POST,
             f'{API_ENDPOINT}/hypesquad/online',data)
 
-    def hypesquad_house_leave(self):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_DELETE,
+    async def hypesquad_house_leave(self):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_DELETE,
             f'{API_ENDPOINT}/hypesquad/online')
 
     #achievements
     
-    def achievement_get_all(self,application_id):
-        return self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,75264),METH_GET,
+    async def achievement_get_all(self,application_id):
+        return await self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,75264),METH_GET,
             f'{API_ENDPOINT}/applications/{application_id}/achievements')
 
-    def achievement_get(self,application_id,achievement_id):
-        return self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,77056),METH_GET,
+    async def achievement_get(self,application_id,achievement_id):
+        return await self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,77056),METH_GET,
             f'{API_ENDPOINT}/applications/{application_id}/achievements/{achievement_id}')
 
-    def achievement_create(self,application_id,data):
-        return self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,78848),METH_POST,
+    async def achievement_create(self,application_id,data):
+        return await self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,78848),METH_POST,
             f'{API_ENDPOINT}/applications/{application_id}/achievements',data)
 
-    def achievement_edit(self,application_id,achievement_id,data):
-        return self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,80640),METH_PATCH,
+    async def achievement_edit(self,application_id,achievement_id,data):
+        return await self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,80640),METH_PATCH,
             f'{API_ENDPOINT}/applications/{application_id}/achievements/{achievement_id}',data)
 
-    def achievement_delete(self,application_id,achievement_id):
-        return self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,82432),METH_DELETE,
+    async def achievement_delete(self,application_id,achievement_id):
+        return await self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,82432),METH_DELETE,
             f'{API_ENDPOINT}/applications/{application_id}/achievements/{achievement_id}')
 
-    def user_achievements(self,application_id,header):
-        return self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,84224),METH_GET,
+    async def user_achievements(self,application_id,header):
+        return await self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,84224),METH_GET,
             f'{API_ENDPOINT}/users/@me/applications/{application_id}/achievements',header=header)
     
-    def user_achievement_update(self,user_id,application_id,achievement_id,data):
-        return self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,86016),METH_PUT,
+    async def user_achievement_update(self,user_id,application_id,achievement_id,data):
+        return await self.request(ratelimit_handler(self.loop,GLOBALLY_LIMITED,86016),METH_PUT,
             f'{API_ENDPOINT}/users/{user_id}/applications/{application_id}/achievements/{achievement_id}',data)
 
     #random
     
     #hooman only sadly, but this would be nice to be allowed, to get name and icon at least
-    def application_get(self,application_id):
-        return self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
+    async def application_get(self,application_id):
+        return await self.request(ratelimit_handler.unlimited(self.loop),METH_GET,
             f'{API_ENDPOINT}/applications/{application_id}')
 
 del re

@@ -1039,22 +1039,22 @@ class Embed(object):
     def __init__(self,title=None,description=None,color=None,url=None,timestamp=None,type_='rich'):
         self.data = data = {}
         
-        if title is not None:
+        if (title is not None):
             data['title']       = title
             
-        if description is not None:
+        if (description is not None):
             data['description'] = description
             
-        if color is not None:
+        if (color is not None):
             data['color']       = color
             
-        if url is not None:
+        if (url is not None):
             data['url']         = url
             
-        if timestamp is not None:
+        if (timestamp is not None):
             data['timestamp']   = timestamp.isoformat()
             
-        if type_ is not None:
+        if (type_ is not None):
             data['type']        = type_
 
     def to_data(self):
@@ -1081,13 +1081,15 @@ class Embed(object):
     def add_author(self,icon_url=None,name=None,url=None):
         data = {}
 
-        if name is not None:
+        if (name is not None):
             data['name']    = name
-        if url is not None:
+        
+        if (url is not None):
             data['url']     = url
-        if icon_url is not None:
+        
+        if (icon_url is not None):
             data['icon_url']= icon_url
-
+        
         self.data['author']=data
         return self
 

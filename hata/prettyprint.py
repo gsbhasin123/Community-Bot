@@ -772,7 +772,7 @@ def str_permission(permission,**kwargs):
         result.append(f'- {name: <22}: {value}',1)
     return result
 
-def str_invite(invite,index=None,show_code=True,write_parents=True,**kwargs):
+def str_invite(invite,index=None,write_parents=True,**kwargs):
     result=Pretty_block()
     if index is None:
         start=''
@@ -780,8 +780,7 @@ def str_invite(invite,index=None,show_code=True,write_parents=True,**kwargs):
         start=f'{index}.: '
     result.append(f'{start}Invite:')
     result.append(f'- inviter : {invite.inviter:f}',1)
-    if show_code:
-        result.append(f'- code : {invite.code}',1)
+    result.append(f'- code : {invite.code}',1)
     
     channel=invite.channel
     if channel is not None:
@@ -1235,17 +1234,17 @@ def str_achievement(achievement,index=None,**kwargs):
     else:
         start=f'{index}.: '
     result.append(f'{start}Achievement:')
-    result.append(f' - application_id : {achievement.application_id}',1)
-    result.append(f' - id : {achievement.id}',1)
-    result.append(f' - name : {achievement.name}',1)
-    result.append(f' - description : {achievement.description}',1)
-    result.append(f' - secret : {achievement.secret}',1)
-    result.append(f' - secure : {achievement.secure}',1)
-    if achievement.icon:
-        result.append(f'- icon: {achievement.icon:0>32x}',1)
-    else:
-        result.append( '- icon: None',1)
-
+    result.append(f'- application_id : {achievement.application_id}',1)
+    result.append(f'- id : {achievement.id}',1)
+    result.append(f'- name : {achievement.name}',1)
+    result.append(f'- description : {achievement.description}',1)
+    result.append(f'- secret : {achievement.secret}',1)
+    result.append(f'- secure : {achievement.secure}',1)
+    icon_url=achievement.icon_url_as(size=4096)
+    if (icon_url is None):
+        icon_url='None'
+    result.append(f'- icon: {icon_url}',1)
+    
     return result
 
 PRETTY_PRINTERS['Message']=str_message

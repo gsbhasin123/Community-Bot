@@ -142,7 +142,7 @@ class UserOA2(UserBase):
         self.email          = data.get('email','')
         self.flags          = UserFlag(data.get('flags',0))
         self.premium_type   = PremiumType.values[data.get('premium_type',0)]
-        self.locale       = parse_locale(data)
+        self.locale         = parse_locale(data)
 
     @property
     def access_token(self):

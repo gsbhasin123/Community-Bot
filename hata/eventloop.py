@@ -812,6 +812,7 @@ class EventThread(Executor,Thread,metaclass=EventThreadType):
         def render_exc_async(self,exception,before=None,after=None,file=None):
             future=self.run_in_executor(alchemy_incendiary(self._render_exc_sync,(exception,before,after,file),))
             future.__silence__()
+            return future
 
         def render_exc_maybe_async(self,exception,before=None,after=None,file=None):
             if isinstance(current_thread(),EventThread):
@@ -822,7 +823,7 @@ class EventThread(Executor,Thread,metaclass=EventThreadType):
 
     else:
         def render_exc_async(self,exception,before=None,after=None,file=None):
-            self.run_in_executor(alchemy_incendiary(self._render_exc_sync,(exception,before,after,file),))
+            return self.run_in_executor(alchemy_incendiary(self._render_exc_sync,(exception,before,after,file),))
 
         def render_exc_maybe_async(self,exception,before=None,after=None,file=None):
             if isinstance(current_thread(),EventThread):

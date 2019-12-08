@@ -25,8 +25,7 @@ class DiscordException(Exception):
         self.data=data
         self._messages=None
         self._code=None
-        print(data)
-    
+        
     @property
     def messages(self):
         messages=self._messages
@@ -50,7 +49,8 @@ class DiscordException(Exception):
                         del stack[-1]
                         if stack:
                             del stack[-1][-1]
-                            del message_parts[-1]
+                            if message_parts:
+                                del message_parts[-1]
                             continue
                         break
                     

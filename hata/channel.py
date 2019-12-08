@@ -1815,7 +1815,7 @@ CHANNEL_TYPES = (
     ChannelStore,
         )
 
-def cr_pg_channel_object(name,type_,overwrites=[],topic='',nsfw=False,slowmode=0,bitrate=64000,user_limit=0,bitrate_limit=96000):
+def cr_pg_channel_object(name,type_,overwrites=[],topic=None,nsfw=False,slowmode=0,bitrate=64000,user_limit=0,bitrate_limit=96000):
     if type(type_) is int:
         value=type_
     elif isinstance(type_,type) and issubclass(type_,ChannelBase):
@@ -1839,11 +1839,13 @@ def cr_pg_channel_object(name,type_,overwrites=[],topic='',nsfw=False,slowmode=0
             }
     
     if value in (0,5):
-        if topic:
-            if len(topic)>1024:
-                raise ValueError(f'Invalid topic length {len(topic)}, should be 0-1024')
-            result['topic']=topic
-
+        if (topic is not None):
+            topic_ln=len(topic)
+            if topic_ln>1024:
+                raise ValueError(f'Topic length can be betwen 0-1024, got {topic_ln}')
+            if topic_ln!=0:
+                result['topic']=topic
+    
     if value in (0,5,6):
         if nsfw:
             result['nsfw']=nsfw

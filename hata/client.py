@@ -281,7 +281,7 @@ class Client(UserBase):
         self.email          = data.get('email','')
         self.flags          = UserFlag(data.get('flags',0))
         self.premium_type   = PremiumType.values[data.get('premium_type',0)]
-        self.locale       = parse_locale(data)
+        self.locale         = parse_locale(data)
 
         self.partial        = False
 
@@ -298,22 +298,26 @@ class Client(UserBase):
         
     #house must be type  HypeSquadHouse
     #avatar is bytes
-    async def client_edit(self,password='',new_password='',email='',house=None,name='',avatar=b''):
+    async def client_edit(self,password=None,new_password=None,email=None,house=_spaceholder,name=None,avatar=_spaceholder):
         data={}
         
-        if password:
+        if (password is None):
+            if not self.is_bot:
+                raise ValueError('Password is must for non bots!')
+        else:
             data['password']=password
-        elif not self.is_bot:
-            raise ValueError('Password is must for non bots!')
-            
-        if name:
-            if not (1<len(name)<33):
-                raise ValueError(f'The lenght of the name can be between 2-32, got {len(name)}')
+
+        if (name is not None):
+            name_ln=len(name)
+            if name_ln<2 or name_ln>32:
+                raise ValueError(f'The length of the name can be between 2-32, got {name_ln}')
             data['username']=name
         
-        if avatar is None:
+        if avatar is _spaceholder:
+            pass
+        elif avatar is None:
             data['avatar']=None
-        elif avatar:
+        else:
             avatar_data=bytes_to_base64(avatar)
             ext=ext_from_base64(avatar_data)
             if self.premium_type.value:
@@ -325,9 +329,9 @@ class Client(UserBase):
             data['avatar']=avatar_data
         
         if not self.is_bot:
-            if email:
+            if (email is not None):
                 data['email']=email
-            if new_password:
+            if (new_password is not None):
                 data['new_password']=new_password
 
         data=await self.http.client_edit(data)
@@ -340,14 +344,15 @@ class Client(UserBase):
             except KeyError:
                 pass
 
-        if house is None:
+        if house is _spaceholder:
             pass
-        elif isinstance(house,HypesquadHouse):
-            await self.hypesquad_house_change(house)
-        else:
+        elif house is None:
             await self.hypesquad_house_leave()
-
+        else:
+            await self.hypesquad_house_change(house)
+        
     #user account only
+    #TODO : consider adding folder editing(?)
     async def client_edit_settings(self,**kwargs):
         data={}
 
@@ -399,9 +404,33 @@ class Client(UserBase):
         self.settings._update_no_return(data)
         
     async def client_edit_nick(self,guild,nick,reason=None):
-        if nick is not None and not (1<len(nick)<33):
-            raise ValueError(f'The lenght of the nick can be between 2-32, got {len(nick)}')
-        if nick!=self.guild_profiles[guild].nick:
+        if (nick is not None):
+            nick_ln=len(nick)
+            if nick_ln>32:
+                raise ValueError(f'The length of the nick can be between 1-32, got {nick_ln}')
+            if nick_ln==0:
+                nick=None
+        
+        try:
+            actual_nick=self.guild_profiles[guild].nick
+        except KeyError:
+            # we arent at the guild ->  will raise propably
+            should_edit_nick=True
+        else:
+            if nick is None:
+                if actual_nick is None:
+                    should_edit_nick=False
+                else:
+                    should_edit_nick=True
+            else:
+                if actual_nick is None:
+                    should_edit_nick=True
+                elif nick==actual_nick:
+                    should_edit_nick=False
+                else:
+                    should_edit_nick=True
+        
+        if should_edit_nick:
             await self.http.client_edit_nick(guild.id,{'nick':nick},reason)
 
     async def client_connections(self):
@@ -524,7 +553,7 @@ class Client(UserBase):
         access.renew(data)
 
     #needs `guilds.join` scope granted
-    async def guild_user_add(self,guild,access_or_compuser,user=None,nick='',roles=[],mute=False,deaf=False):
+    async def guild_user_add(self,guild,access_or_compuser,user=None,nick=None,roles=[],mute=False,deaf=False):
         if type(access_or_compuser) is AO2Access:
             access=access_or_compuser
             if user is None:
@@ -537,14 +566,19 @@ class Client(UserBase):
             raise TypeError(f'Invalid access_or_compuser type, expected AO2Access or UserOA2, got {access_or_compuser.__class__.__name__}')
         
         data={'access_token':access.access_token}
-        if nick:
-            if not (1<len(nick)<33):
-                raise ValueError(f'The lenght of the nick can be between 2-32, got {len(nick)}')
-            data['nick']=nick
+        if (nick is not None):
+            nick_ln=len(nick)
+            if nick_ln!=0:
+                if nick_ln>32:
+                    raise ValueError(f'The length of the nick can be between 1-32, got {nick_ln}')
+                data['nick']=nick
+                
         if roles:
             data['roles']=[role.id for role in roles]
+            
         if mute:
             data['mute']=mute
+            
         if deaf:
             data['deaf']=deaf
             
@@ -560,28 +594,15 @@ class Client(UserBase):
     #achievements (they are all broken right now)
     #TODO : when discord wont be broken test them
     
-    # DiscordException FORBIDDEN (403), code=20001: Bots cannot use this endpoint
-    async def achievement_get_all(self,application=None):
-        if application is None:
-            application_id=self.application.id
-        else:
-            application_id=application.id
-        
-        data = await self.http.achievement_get_all(application_id)
+    async def achievement_get_all(self):
+        data = await self.http.achievement_get_all(self.application.id)
         return [Achievement(achievement_data) for achievement_data in data]
-
-    # DiscordException FORBIDDEN (403), code=20001: Bots cannot use this endpoint
-    async def achievement_get(self,achievement_id,application=None):
-        if application is None:
-            application_id=self.application.id
-        else:
-            application_id=application.id
-            
-        data = await self.http.achievement_get(application_id,achievement_id)
+    
+    async def achievement_get(self,achievement_id):
+        data = await self.http.achievement_get(self.application.id,achievement_id)
         return Achievement(data)
-
-    # DiscordException FORBIDDEN (403), code=20001: Bots cannot use this endpoint
-    async def achievement_create(self,name,description,secret,secure,icon,application=None):
+    
+    async def achievement_create(self,name,description,icon,secret=False,secure=False):
         icon_data=bytes_to_base64(icon)
         ext=ext_from_base64(icon_data)
         if ext not in VALID_ICON_FORMATS_EXTENDED:
@@ -598,79 +619,58 @@ class Client(UserBase):
             'secure'        : secure,
             'icon'          : icon_data,
                 }
-
-        if application is None:
-            application_id=self.application.id
-        else:
-            application_id=application.id
-            
-        data = await self.http.achievement_create(application_id,data)
+        
+        data = await self.http.achievement_create(self.application.id,data)
         return Achievement(data)
     
-    # DiscordException FORBIDDEN (403), code=20001: Bots cannot use this endpoint
-    async def achievement_edit(self,achievement_id,name='',description='',secret=None,secure=None,icon=b'',application=None):
+    async def achievement_edit(self,achievement,name=None,description=None,secret=None,secure=None,icon=_spaceholder):
         #TODO : do we need full payload?
         data={}
-        if name:
+        if (name is not None):
             data['name'] = {
                 'default'   : name,
                     }
-        if description:
+        if (description is not None):
             data['description'] = {
                 'default'   : description,
                     }
-        if secret is not None:
+        if (secret is not None):
             data['secret']=secret
-        if secure is not None:
+            
+        if (secure is not None):
             data['secure']=secure
-        if icon:
+            
+        if (icon is not _spaceholder):
             icon_data=bytes_to_base64(icon)
             ext=ext_from_base64(icon_data)
             if ext not in VALID_ICON_FORMATS_EXTENDED:
                 raise ValueError(f'Invalid icon type: {ext}')
             data['icon']=icon_data
-
-        if application is None:
-            application_id=self.application.id
-        else:
-            application_id=application.id
-            
-        data = await self.http.achievement_edit(application_id,achievement_id,data)
-        return Achievement(data)
+        
+        data = await self.http.achievement_edit(self.application.id,achievement.id,data)
+        achievement._update_no_return(data)
+        return achievement
     
-    # DiscordException FORBIDDEN (403), code=20001: Bots cannot use this endpoint
-    async def achievement_delete(self,achievement_id,application=None):
-        if application is None:
-            application_id=self.application.id
-        else:
-            application_id=application.id
-            
-        await self.http.achievement_delete(application_id,achievement_id)
+    async def achievement_delete(self,achievement):
+        await self.http.achievement_delete(self.application.id,achievement.id)
 
-    #needs 'applications.store.update' scope granted
+    # needs 'applications.store.update' scope granted (?)
     # DiscordException UNAUTHORIZED (401): 401: Unauthorized
-    async def user_achievements(self,access,application=None):
+    async def user_achievements(self,access):
         header=multidict_titled()
         header[AUTHORIZATION]=f'Bearer {access.access_token}'
         
-        if application is None:
-            application_id=self.application.id
-        else:
-            application_id=application.id
-            
-        data = await self.http.user_achievements(application_id,header)
+        data = await self.http.user_achievements(self.application.id,header)
         return [Achievement(achievement_data) for achievement_data in data]
-
-    # DiscordException FORBIDDEN (403), code=40001: Unauthorized
-    async def user_achievement_update(self,user,achievement_id,percent_complete,application=None):
+    
+    # when updating secure achievement:
+    #     DiscordException NOT FOUND (404), code=10029: Unknown Entitlement
+    # when updating non secure:
+    #     DiscordException FORBIDDEN (403), code=40001: Unauthorized
+    async def user_achievement_update(self,user,achievement,percent_complete):
         data={'percent_complete':percent_complete}
-
-        if application is None:
-            application_id=self.application.id
-        else:
-            application_id=application.id
         
-        await self.http.user_achievement_update(user.id,application_id,achievement_id,data)
+        await self.http.user_achievement_update(user.id,self.application.id,achievement.id,data)
 
     #hooman only
     async def application_get(self,application_id):
@@ -773,26 +773,35 @@ class Client(UserBase):
 
     async def channel_group_user_delete(self,channel,*users):
         for user in users:
-            await self.http.channel_group_user_delete(self,channel.id,user.id)
+            await self.http.channel_group_user_delete(channel.id,user.id)
 
-    async def channel_group_edit(self,channel,name='',icon=b''):
+    async def channel_group_edit(self,channel,name=_spaceholder,icon=_spaceholder):
         data={}
 
-        if name:
-            if not (1<len(name)<101):
-                raise ValueError(f'Channel\'s name\'s lenght can be between 2-100, got {len(name)}')
+        if (name is not _spaceholder):
+            if (name is not None):
+                name_ln=len(name)
+                if name_ln==1 or name_ln>100:
+                    raise ValueError(f'Channel\'s name\'s length can be between 2-100, got {name_ln}')
+                
+                if name_ln==0:
+                    name=None
+            
             data['name']=name
         
-        if icon is None:
+        if icon is _spaceholder:
+            pass
+        elif icon is None:
             data['icon']=None
-        elif icon:
+        else:
             icon_data=bytes_to_base64(icon)
             ext=ext_from_base64(icon_data)
             if ext not in VALID_ICON_FORMATS:
                 raise ValueError(f'Invalid icon type: {ext}')
             data['icon']=icon_data
-
-        await self.http.channel_group_edit(channel.id,data)
+        
+        if data:
+            await self.http.channel_group_edit(channel.id,data)
 
     #user only
     async def channel_group_create(self,users):
@@ -1190,23 +1199,24 @@ class Client(UserBase):
 
         await self.http.channel_move(channel.guild.id,data,reason)
 
-    async def channel_edit(self,channel,name='',topic='',nsfw=None,slowmode=None,user_limit=None,bitrate=None,type_=128,reason=None):
+    async def channel_edit(self,channel,name=None,topic=None,nsfw=None,slowmode=None,user_limit=None,bitrate=None,type_=128,reason=None):
         if not isinstance(channel,ChannelGuildBase):
             raise ValueError(f'Only Guild channels can be edited with this method, got {channel!r}')
         
         data={}
         value=channel.type
-        if name:
-            if not 1<len(name)<101:
-                raise ValueError(f'Invalid nam length {len(name)}, should be 2-100')
+        if (name is not None):
+            name_ln=len(name)
+            if name_ln<2 or name_ln>100:
+                raise ValueError(f'Invalid name length, can be between 2-100, got {name_ln}')
             data['name']=name
         
         if value in (0,5):
-            if topic:
-                if len(topic)>1024:
-                    raise ValueError(f'Invalid topic length {len(topic)}, should be 0-1024')
+            if (topic is not None):
+                topic_ln=len(topic)
+                if topic_ln>1024:
+                    raise ValueError(f'Invalid topic length can be between 0-1024, go {topic_ln}')
                 data['topic']=topic
-        
         
         if type_<128:
             INTERCHANGE=channel.INTERCHANGE
@@ -1218,13 +1228,13 @@ class Client(UserBase):
                 data['type']=type_
         
         if value in (0,5,6):
-            if nsfw is not None:
+            if (nsfw is not None):
                 data['nsfw']=nsfw
                 
         if value==0:
             if slowmode is not None:
                 if slowmode<0 or slowmode>21600:
-                    raise ValueError(f'Invalid slowmode {slowmode}, should be 0-120')
+                    raise ValueError(f'Invalid slowmode {slowmode}, should be 0-21600')
                 data['rate_limit_per_user']=slowmode
 
         elif value==2:
@@ -1250,9 +1260,9 @@ class Client(UserBase):
 
     async def channel_follow(self,source_channel,target_channel):
         if source_channel.type!=5:
-            raise ValueError(f'\'source_channel\' must be type 5, so news (announcements) channel, got {source_channel}')
+            raise ValueError(f'`source_channel` must be type 5, so news (announcements) channel, got `{source_channel}`')
         if target_channel.type not in ChannelText.INTERCHANGE:
-            raise ValueError(f'\'target_channel\' must be type 0 or 5, so any guild text channel, got  {target_channel}')
+            raise ValueError(f'`target_channel` must be type 0 or 5, so any guild text channel, got  `{target_channel}`')
 
         data = {
             'webhook_channel_id': target_channel.id,
@@ -1271,14 +1281,18 @@ class Client(UserBase):
         self.mar_token=data['token']
 
     async def message_logs(self,channel,limit=100,after=None,around=None,before=None):
-        if 0>limit>100:
-            raise ValueError('limit must be in <1,100>')
+        if limit<1 or limit>100:
+            raise ValueError(f'limit must be in <1,100>, got {limit}')
+        
         data={'limit':limit}
-        if after is not None:
+        
+        if (after is not None):
             data['after']=log_time_converter(after)
-        if around is not None:
+            
+        if (around is not None):
             data['around']=log_time_converter(around)
-        if before is not None:
+            
+        if (before is not None):
             data['before']=log_time_converter(before)
         
         data = await self.http.message_logs(channel.id,data)
@@ -1287,8 +1301,9 @@ class Client(UserBase):
     #if u have 0-1-2 messages at a channel, and you wanna store the messages.
     #the other wont store it, because it wont see anything what allows channeling
     async def message_logs_fromzero(self,channel,limit=100):
-        if 0>limit>100:
-            raise ValueError('limit must be in <1,100>')
+        if limit<1 or limit>100:
+            raise ValueError(f'limit must be in <1,100>, got {limit}')
+        
         data={'limit':limit,'before':now_as_id()}
         data=await self.http.message_logs(channel.id,data)
         if data:
@@ -1300,24 +1315,36 @@ class Client(UserBase):
         data = await self.http.message_get(channel.id,message_id)
         return Message.onetime(data,channel)
     
-    async def message_create(self,channel,content='',embed=None,file=None,tts=False,nonce=0):
-        if (not content) and (embed is None) and (file is None):
-            return #saved 1 request, is this really necesarry?
+    async def message_create(self,channel,content=None,embed=None,file=None,tts=False,nonce=None):
         data={}
-        if content:
+        contains_content=False
+        
+        if (content is not None) and content:
             data['content']=content
-        if embed is not None:
+            contains_content=True
+        
+        if (embed is not None):
             data['embed']=embed.to_data()
+            contains_content=True
+        
         if tts:
             data['tts']=True
-        if nonce:
+        
+        if (nonce is not None):
             data['nonce']=nonce
 
         if file is None:
             to_send=data
         else:
             to_send=self._create_file_form(data,file)
-                
+            if to_send is None:
+                to_send=data
+            else:
+                contains_content=True
+        
+        if not contains_content:
+            return None
+        
         data = await self.http.message_create(channel.id,to_send)
         return Message.new(data,channel)
     
@@ -1368,18 +1395,19 @@ class Client(UserBase):
             files.append((name,file),)
 
         #checking the amount of files
-
         #case 1 one file
         if len(files)==1:
             name,io=files[0]
             form.add_field('file',io,filename=name,content_type='application/octet-stream')
-
-        #case 2 maximum 10 files
+        #case 2, no files -> return None, we should use the already existing data
+        elif len(files)==0:
+            return None
+        #case 3 maximum 10 files
         elif len(files)<11:
             for index,(name,io) in enumerate(files):
                 form.add_field(f'file{index}s',io,filename=name,content_type='application/octet-stream')
                 
-        #case 3 more than 10 files
+        #case 4 more than 10 files
         else:
             raise ValueError('You can send maximum 10 files at once.')
         
@@ -1565,10 +1593,11 @@ class Client(UserBase):
                 await self.http.message_delete_multiple(channel_id,{'messages':message_ids},reason)
                         
 
-    async def message_edit(self,message,content='',embed=None,*args,**kwargs):
+    async def message_edit(self,message,content=None,embed=None,*args,**kwargs):
         data={}
-        if content:
+        if (content is not None):
             data['content']=content
+        
         if embed is not None:
             data['embed']=embed.to_data()
             
@@ -1625,15 +1654,20 @@ class Client(UserBase):
         except KeyError:
             return []
         line=message.reactions[emoji]
+        
         if line.unknown:
             data={}
-            if limit is not None:
-                if 0>limit>101:
-                    raise ValueError('Limit must be 1-100 and not {limit}')
+            if (limit is not None):
+                limit_ln=len(limit)
+                if limit_ln<1 or limit_ln>100:
+                    raise ValueError(f'Limit can be between 1-100, got {limit}')
+                
                 data['limit']=limit
-            if after is not None:
+            
+            if (after is not None):
                 data['after']=log_time_converter(after)
-            if before is not None:
+            
+            if (before is not None):
                 data['before']=log_time_converter(before)
                 
             data = await self.http.reaction_users(message.channel.id,message.id,emoji.as_reaction,data)
@@ -1810,9 +1844,10 @@ class Client(UserBase):
             else:
                 message='Hooman cannot have more than 100 guilds.'
             raise ValueError(message)
-
-        if not (1<len(name)<101):
-            raise ValueError(f'Guild\'s name\'s lenght can be between 2-100, got {len(name)}')
+        
+        name_ln=len(name)
+        if name_ln<2 or name_ln>100:
+            raise ValueError(f'Guild\'s name\'s length can be between 2-100, got {name_ln}')
         
         data = {
             'name'                          : name,
@@ -1845,54 +1880,62 @@ class Client(UserBase):
 
     #splash is only available for guilds with INVITE_SPLASH feature.
     #banner is only available for guilds with BANNER feature.
-    async def guild_edit(self,guild,name='',icon=b'',splash=b'',
-            afk_channel=_spaceholder,system_channel=_spaceholder,owner=None,
-            region=None, afk_timeout=None,verification_level=None,
-            content_filter=None, message_notification=None, description=None,
-            banner=b'', system_channel_flags=None, reason=None):
+    async def guild_edit(self, guild, name=None, icon=_spaceholder,
+            splash=_spaceholder, afk_channel=_spaceholder,
+            system_channel=_spaceholder, owner=None, region=None,
+            afk_timeout=None,verification_level=None, content_filter=None,
+            message_notification=None, description=None, banner=_spaceholder,
+            system_channel_flags=None, reason=None):
 
         data={}
         
-        if name:
-            if not (1<len(name)<101):
-                raise ValueError(f'Guild\'s name\'s lenght can be between 2-100, got {len(name)}')
+        if (name is not None):
+            name_ln=len(name)
+            if name_ln<2 or name_ln>100:
+                raise ValueError(f'Guild\'s name\'s length can be between 2-100, got {name_ln}')
             data['name']=name
-        if icon is None:
+        
+        if icon is _spaceholder:
+            pass
+        elif icon is None:
             data['icon']=None
-        elif icon:
+        else:
             icon_data=bytes_to_base64(icon)
             ext=ext_from_base64(icon_data)
             if ext not in (VALID_ICON_FORMATS_EXTENDED if (GuildFeature.animated_icon in guild.features) else VALID_ICON_FORMATS):
                 raise ValueError(f'Invalid icon type: {ext}')
             data['icon']=icon_data
             
-        if verification_level is not None:
+        if (verification_level is not None):
             data['verification_level']=verification_level.value
 
         if GuildFeature.splash in guild.features:
-            if splash is None:
+            if splash is _spaceholder:
+                pass
+            elif splash is None:
                  data['splash']=None
-            elif splash:
+            else:
                 splash_data=bytes_to_base64(splash)
                 ext=ext_from_base64(splash_data)
                 if ext not in VALID_ICON_FORMATS:
                     raise ValueError(f'Invalid splash type: {ext}')
                 data['splash']=splash_data
-        elif splash is None or splash:
-            raise ValueError('The guild has no splash feature')
+        else:
+            if (splash is not _spaceholder):
+                raise ValueError('The guild has no splash feature')
             
-        if afk_channel is not _spaceholder:
+        if (afk_channel is not _spaceholder):
             data['afk_channel_id']=None if afk_channel is None else afk_channel.id
         
-        if system_channel is not _spaceholder:
+        if (system_channel is not _spaceholder):
             data['system_channel_id']=None if system_channel is None else system_channel.id
             
-        if owner is not None:
-            if guild.owner is not self:
+        if (owner is not None):
+            if (guild.owner!=self):
                 raise ValueError('You must be owner to transfer ownership')
             data['owner_id']=owner.id
 
-        if region is not None:
+        if (region is not None):
             data['region']=region.id
 
         if afk_timeout is not None:
@@ -1900,28 +1943,31 @@ class Client(UserBase):
                 raise ValueError('Afk timeout should be 60, 300, 900, 1800, 3600  seconds!')
             data['afk_timeout']=afk_timeout
 
-        if content_filter is not None:
+        if (content_filter is not None):
             data['explicit_content_filter']=content_filter.value
 
-        if message_notification is not None:
+        if (message_notification is not None):
             data['default_message_notifications']=message_notification.value
 
-        if description is not None:
+        if (description is not None):
             data['description']=description if description else None
 
         if GuildFeature.banner in guild.features:
-            if banner is None:
+            if banner is _spaceholder:
+                pass
+            elif banner is None:
                  data['banner']=None
-            elif banner:
+            else:
                 banner_data=bytes_to_base64(banner)
                 ext=ext_from_base64(banner_data)
                 if ext not in VALID_ICON_FORMATS:
                     raise ValueError(f'Invalid banner type: {ext}')
                 data['banner']=banner_data
-        elif banner is None or banner:
-            raise ValueError('The guild has no banner feature')
+        else:
+            if (banner is not _spaceholder):
+                raise ValueError('The guild has no banner feature')
 
-        if system_channel_flags is not None:
+        if (system_channel_flags is not None):
             data['system_channel_flags']=system_channel_flags
         
         await self.http.guild_edit(guild.id,data,reason)
@@ -2016,16 +2062,21 @@ class Client(UserBase):
         guild._sync_roles(data)
     
     async def audit_logs(self,guild,limit=100,before=None,after=None,user=None,event=None,):
-        if 0>limit>101:
-            raise ValueError('Limit can be in <1,100>, got {limit!r}')
+        if limit<1 or limit>100:
+            raise ValueError(f'Limit can be in <1,100>, got {limit}')
+        
         data={'limit':limit}
-        if before is not None:
+        
+        if (before is not None):
             data['before']=log_time_converter(before)
-        if after is not None:
+            
+        if (after is not None):
             data['after']=log_time_converter(after)
-        if user is not None:
+            
+        if (user is not None):
             data['user_id']=user.id
-        if event is not None:
+        
+        if (event is not None):
             data['action_type']=event.value
 
         data = await self.http.audit_logs(guild.id,data)
@@ -2036,25 +2087,54 @@ class Client(UserBase):
 
     #users
 
-    async def user_edit(self,guild,user,nick='',deaf=None,mute=None,voice_channel=_spaceholder,roles=None,reason=None):
+    async def user_edit(self,guild,user,nick=_spaceholder,deaf=None,mute=None,voice_channel=_spaceholder,roles=None,reason=None):
         data={}
-        if nick!='':
-            if nick is not None and not (1<len(nick)<33):
-                raise ValueError(f'The lenght of the nick can be between 2-32, got {len(nick)}')
-            if nick!=self.guild_profiles[guild].nick:
-                if self is user:
+        if (nick is not _spaceholder):
+            if (nick is not None):
+                nick_ln=len(nick)
+                if nick_ln>32:
+                    raise ValueError(f'The length of the nick can be between 1-32, got {nick_ln}')
+                if nick_ln==0:
+                    nick=None
+            
+            should_edit_nick=False
+            try:
+                actual_nick=user.guild_profiles[guild].nick
+            except KeyError:
+                # user cache disabled, or the user is not at the guild -> will raise later
+                should_edit_nick=True
+            else:
+                if (nick is None):
+                    if (actual_nick is None):
+                        should_edit_nick=False
+                    else:
+                        should_edit_nick=True
+                else:
+                    if (actual_nick is None):
+                        should_edit_nick=True
+                    elif actual_nick==nick:
+                        should_edit_nick=False
+                    else:
+                        should_edit_nick=True
+            
+            if should_edit_nick:
+                if self==user:
                     await self.http.client_edit_nick(guild.id,{'nick':nick},reason)
                 else:
                     data['nick']=nick
-        
-        if deaf is not None:
+                    
+        if (deaf is not None):
             data['deaf']=deaf
-        if mute is not None:
+            
+        if (mute is not None):
             data['mute']=mute
-        if voice_channel is not _spaceholder:
+            
+        if (voice_channel is not _spaceholder):
             data['channel_id']=None if voice_channel is None else voice_channel.id
-        if roles is not None:
-            data['roles']=tuple(role.id for role in roles)
+            
+        if (roles is not None):
+            data['roles']=[role.id for role in roles]
+            
         await self.http.user_edit(guild.id,user.id,data,reason)
 
     async def user_role_add(self,user,role,reason=None):
@@ -2156,9 +2236,14 @@ class Client(UserBase):
         
     # Webhook management
 
-    async def webhook_create(self,channel,name,avatar=b''):
+    async def webhook_create(self,channel,name,avatar=None):
+        name_ln=len(name)
+        if name_ln==0 or name_ln>32:
+            raise ValueError(f'Name length can be between 1-32, got {name_ln}')
+        
         data={'name':name}
-        if avatar:            
+        
+        if (avatar is not None):
             data['avatar']=bytes_to_base64(avatar)
 
         data = await self.http.webhook_create(channel.id,data)
@@ -2238,20 +2323,24 @@ class Client(UserBase):
         await self.http.webhook_delete_token(webhook)
             
     #later there gonna be more stuff thats why 2 different
-    async def webhook_edit(self,webhook,name='',avatar=b'',channel=None):
+    async def webhook_edit(self,webhook,name=None,avatar=_spaceholder,channel=None):
         data={}
         
-        if name:
-            if not (1<len(name)<33):
-                raise ValueError(f'The lenght of the name can be between 2-32, got {len(name)}')
+        if (name is not None):
+            name_ln=len(name)
+            if name_ln==0 or name_ln>32:
+                raise ValueError(f'The length of the name can be between 1-32, got {name_ln}')
+            
             data['name']=name
         
-        if avatar is None:
+        if (avatar is _spaceholder):
+            pass
+        elif (avatar is None):
             data['avatar']=None
-        elif avatar:
+        else:
             data['avatar']=bytes_to_base64(avatar)
 
-        if channel is not None:
+        if (channel is not None):
             data['channel_id']=channel.id
             
         if not data:
@@ -2260,16 +2349,21 @@ class Client(UserBase):
         data = await self.http.webhook_edit(webhook.id,data)
         webhook._update_no_return(data)
         
-    async def webhook_edit_token(self,webhook,name='',avatar=b''): #channel is ignored!
+    async def webhook_edit_token(self,webhook,name=None,avatar=_spaceholder): #channel is ignored!
         data={}
-        if name:
-            if not (1<len(name)<33):
-                raise ValueError(f'The lenght of the name can be between 2-32, got {len(name)}')
-            data['name']=name
+        
+        if (name is not None):
+            name_ln=len(name)
+            if name_ln==0 or name_ln>32:
+                raise ValueError(f'The length of the name can be between 1-32, got {name_ln}')
             
-        if avatar is None:
+            data['name']=name
+        
+        if (avatar is _spaceholder):
+            pass
+        elif (avatar is None):
             data['avatar']=None
-        elif avatar:
+        else:
             data['avatar']=bytes_to_base64(avatar)
         
         if not data:
@@ -2278,36 +2372,56 @@ class Client(UserBase):
         data = await self.http.webhook_edit_token(webhook,data)
         webhook._update_no_return(data)
    
-    async def webhook_send(self,webhook,content='',embed=None,file=None,tts=False,name='',avatar_url='',wait=False):
-        if (not content) and (embed is None) and (file is None):
-            return #saved 1 request, is this really necesarry?
+    async def webhook_send(self,webhook,content=None,embed=None,file=None,tts=False,name=None,avatar_url=None,wait=False):
         data={}
-        if embed is not None:
-            if isinstance(embed,(list,deque)):
-                if len(embed)>10:
-                    raise ValueError('There can be only 10 embed maximum.')
-                data['embeds']=[embed.to_data() for embed in embed]
+        contains_content=False
+        
+        if (embed is not None):
+            if isinstance(embed,(tuple,list,deque)):
+                embed_amount=len(embed)
+                if embed_amount>10:
+                    raise ValueError(f'There can be only 10 embed maximum, got {embed_amount}.')
+                
+                if embed_amount!=0:
+                    data['embeds']=[embed.to_data() for embed in embed]
+                    contains_content=True
             else:
-                data['embeds']=[embed.to_data()]
-
-        if content:
+                #check case, when it is not embed like
+                converter=getattr(type(embed),'to_data')
+                if converter is None:
+                    raise TypeError(f'Expected Embed like, tuple, list or deque for embed, got `{embed!r}`')
+                
+                data['embeds']=[converter(embed)]
+                contains_content=True
+                
+        if (content is not None) and content:
             data['content']=content
+            contains_content=True
 
         if tts:
             data['tts']=True
         
-        if avatar_url:
+        if (avatar_url is not None):
             data['avatar_url']=avatar_url
             
-        if name:
-            if not (1<len(name)<33):
-                raise ValueError(f'The lenght of the name can be between 2-32, got {len(name)}')
-            data['username']=name
+        if (name is not None):
+            name_ln=len(name)
+            if name_ln>32:
+                raise ValueError(f'The length of the name can be between 1-32, got {name_ln}')
+            if name_ln!=0:
+                data['username']=name
 
         if file is None:
             to_send=data
         else:
             to_send=self._create_file_form(data,file)
+            if to_send is None:
+                to_send=data
+            else:
+                contains_content=True
+        
+        if not contains_content:
+            return None
         
         data = await self.http.webhook_send(webhook,to_send,wait)
         
@@ -2328,8 +2442,10 @@ class Client(UserBase):
     async def emoji_create(self,guild,name,image,roles=[],reason=None):
         image=bytes_to_base64(image)
         name=''.join(_VALID_NAME_CHARS.findall(name))
-        if not (1<len(name)<33):
-            raise ValueError(f'The lenght of the name can be between 2-32, got {len(name)}')
+        
+        name_ln=len(name)
+        if name_ln<2 or name_ln>32:
+            raise ValueError(f'The length of the name can be between 2-32, got {name_ln}')
         
         data={
             'name'      : name,
@@ -2342,17 +2458,18 @@ class Client(UserBase):
     async def emoji_delete(self,emoji,reason=None):
         await self.http.emoji_delete(emoji.guild.id,emoji.id,reason=reason)
 
-    async def emoji_edit(self,emoji,name='',roles=[],reason=None):
+    async def emoji_edit(self,emoji,name=None,roles=[],reason=None):
         data={}
-        if name:
-            name=''.join(_VALID_NAME_CHARS.findall(name))
-            if 1<len(name)<33:
-                data['name']=name  
-            else:
-                raise ValueError(f'The lenght of the name can be between 2-32, got {len(name)}')
-        else:
+        
+        if (name is None):
             data['name']=emoji.name
-              
+        else:
+            name=''.join(_VALID_NAME_CHARS.findall(name))
+            name_ln=len(name)
+            if name_ln<2 or name_ln>32:
+                raise ValueError(f'The length of the name can be between 2-32, got {name_ln}')
+            
+            data['name']=name
 
         data['roles']=[role.id for role in roles]
         
@@ -2363,7 +2480,7 @@ class Client(UserBase):
     async def vanity_invite(self,guild):
         vanity_code=guild.vanity_code
         if vanity_code:
-            data = await self.http.invite_get(vanity_code)
+            data = await self.http.invite_get(vanity_code,{})
             return Invite._create_vanity(guild,data)
 
     async def vanity_edit(self,guild,code,reason=None):
@@ -2479,7 +2596,7 @@ class Client(UserBase):
     
     # Role management
 
-    async def role_edit(self,role,name='',color=None,separated=None,
+    async def role_edit(self,role,name=None,color=None,separated=None,
             mentionable=None,permissions=None,position=0,reason=None):
 
         if position:
@@ -2487,9 +2604,10 @@ class Client(UserBase):
 
         data={}
         
-        if name:
-            if not (1<len(name)<33):
-                raise ValueError(f'The name of the role can be between 2-32, got {len(name)}')
+        if (name is not None):
+            name_ln=len(name)
+            if name_ln<2 or name_ln>32:
+                raise ValueError(f'The name of the role can be between 2-32, got {name_ln}')
             data['name']=name
         
         if color is not None:
@@ -2510,23 +2628,28 @@ class Client(UserBase):
     async def role_delete(self,role,reason=None):
         await self.http.role_delete(role.guild.id,role.id,reason)
 
-    async def role_create(self,guild,name='',permissions=None,color=None,
+    async def role_create(self,guild,name=None,permissions=None,color=None,
             separated=None,mentionable=None,reason=None):
         
         data={}
-        if name:
-            if 1<len(name)<33:
-                data['name']=name
-            else:
-                raise ValueError(f'The name of the role can be between 2-32, got {len(name)}')
-        if permissions is not None:
+        if (name is not None):
+            name_ln=len(name)
+            if name_ln<2 or name_ln>32:
+                raise ValueError(f'The name\'s length of the role can be between 2-32, got {name_ln}')
+            data['name']=name
+            
+        if (permissions is not None):
             data['permissions']=permissions
-        if color is not None:
+            
+        if (color is not None):
             data['color']=color
-        if separated is not None:
+            
+        if (separated is not None):
             data['hoist']=separated
-        if mentionable is not None:
+            
+        if (mentionable is not None):
             data['mentionable']=mentionable
+            
         data = await self.http.role_create(guild.id,data,reason)
         return Role(data,guild)
 
@@ -3984,17 +4107,52 @@ class Achievement(object):
         self.application_id=int(data['application_id'])
         self.id=int(data['id'])
 
+        self._update_no_return(data)
+
+    icon_url=property(URLS.achievement_icon_url)
+    icon_url_as=URLS.achievement_icon_url_as
+    
+    def _update(self,data):
+        old={}
+        
+        name=data['name']['default']
+        if self.name!=name:
+            old['name']=self.name
+            self.name=name
+        
+        description=data['description']['default']
+        if self.description!=description:
+            old['description']=self.description
+            self.description=description
+        
+        secret=data['secret']
+        if self.secret!=secret:
+            old['secret']=self.secret
+            self.secret=secret
+        
+        secure=data['secure']
+        if self.secure!=secure:
+            old['secure']=self.secure
+            self.secure=secure
+        
+        icon=data.get('icon_hash')
+        icon=0 if icon is None else int(icon,16)
+        if self.icon!=icon:
+            old['icon']=icon
+            self.icon=icon
+        
+        return old
+    
+    def _update_no_return(self,data):
         self.name=data['name']['default']
         self.description=data['description']['default']
         
         self.secret=data['secret']
         self.secure=data['secure']
         
-        icon=data.get('icon')
+        icon=data.get('icon_hash')
         self.icon=0 if icon is None else int(icon,16)
 
-    icon_url=property(URLS.achievement_icon_url)
-    icon_url_as=URLS.achievement_icon_url_as
 
 client_core.Client=Client
 
