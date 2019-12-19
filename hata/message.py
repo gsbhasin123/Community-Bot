@@ -364,7 +364,7 @@ class Message(object):
             self.activity=MessageActivity.none
             self.activity_party_id=''
         else:
-            self.activity=MessageActivity.values[activity_data['type']]
+            self.activity=MessageActivity.INSTANCES[activity_data['type']]
             self.activity_party_id=activity_data.get('party_id','')
 
 
@@ -376,7 +376,7 @@ class Message(object):
         self.pinned=data.get('pinned',False)
         self.everyone_mention=data.get('mention_everyone',False)
         self.tts=data.get('tts',False)
-        self.type=MessageType.values[data['type']]
+        self.type=MessageType.INSTANCES[data['type']]
         
         attachments=data['attachments']
         if attachments:
@@ -390,12 +390,7 @@ class Message(object):
         else:
             self.embeds=None
 
-        nonce=data.get('nonce',None)
-        if nonce is None:
-            self.nonce=0
-        else:
-            self.nonce=int(nonce,16)
-        
+        self.nonce=data.get('nonce',None)
         self.content=data['content']
         self.flags=MessageFlag(data.get('flags',0))
 
@@ -540,11 +535,11 @@ class Message(object):
                     embed.suppressed=value
                 
         #at the case of pin update edited is None
-        ended_timestamp=data['edited_timestamp']
-        if ended_timestamp is None:
+        edited_timestamp=data['edited_timestamp']
+        if edited_timestamp is None:
             return old
-
-        edited=parse_time(ended_timestamp)
+        
+        edited=parse_time(edited_timestamp)
         if self.edited==edited:
             return old
         
@@ -562,7 +557,7 @@ class Message(object):
         
         try:
             activity_data=data['activity']
-            activity=MessageActivity.values[activity_data['type']]
+            activity=MessageActivity.INSTANCES[activity_data['type']]
         except KeyError:
             activity=MessageActivity.none
             activity_party_id=''
@@ -724,7 +719,7 @@ class Message(object):
             self.activity=MessageActivity.none
             self.activity_party_id=''
         else:
-            self.activity=MessageActivity.values[activity_data['type']]
+            self.activity=MessageActivity.INSTANCES[activity_data['type']]
             try:
                 self.activity_party_id=activity_data.get('party_id')
             except KeyError:
@@ -1185,7 +1180,7 @@ class GroupCall(object):
 
         self.call=call
         self.available=not data['unavailable']
-        self.region=VoiceRegion.values[data['region']]
+        self.region=VoiceRegion.get(data['region'])
         
         unmentioned_ids=set(self.voice_states)
         for voice_state_data in data['voice_states']:

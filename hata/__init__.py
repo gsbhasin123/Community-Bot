@@ -1,4 +1,6 @@
 ﻿# -*- coding: utf-8 -*-
+__version__ = '20191218.1'
+
 import sys
 ASYNC_ONLY = ('async_only' in sys.argv) or ('async-only' in sys.argv)
 del sys

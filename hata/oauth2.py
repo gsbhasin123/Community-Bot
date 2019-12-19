@@ -118,7 +118,8 @@ class AO2Access(object):
                 pass
         
 class UserOA2(UserBase):
-    __slots__=('email', 'flags', 'locale', 'mfa', 'premium_type', 'verified', 'access',) #OA2
+    __slots__ = ('access', 'email', 'flags', 'locale', 'mfa', 'premium_type',
+    'system', 'verified',) #oauth 2 provided by scope
 
     def __init__(self,data,access):
         self.access         = access
@@ -141,9 +142,10 @@ class UserOA2(UserBase):
         self.verified       = data.get('verified',False)
         self.email          = data.get('email','')
         self.flags          = UserFlag(data.get('flags',0))
-        self.premium_type   = PremiumType.values[data.get('premium_type',0)]
+        self.premium_type   = PremiumType.INSTANCES[data.get('premium_type',0)]
         self.locale         = parse_locale(data)
-
+        self.system         = data.get('system',False)
+        
     @property
     def access_token(self):
         return self.access.access_token

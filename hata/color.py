@@ -45,14 +45,22 @@ class Color(int):
 
 
 class DefaultAvatar(object):
+    # class related
+    INSTANCES = [NotImplemented] * 5
+    COUNT = 5
+    
+    @classmethod
+    def for_(cls,user):
+        return cls.INSTANCES[user.discriminator%cls.COUNT]
+    
+    # object related
     __slots__=('color', 'name', 'value',)
-    values={}
-    count=5
+    
     def __init__(self,value,name,color):
         self.value=value
         self.name=name
         self.color=color
-        self.values[value]=self
+        self.INSTANCES[value]=self
         
     def __str__(self):
         return self.name
@@ -63,12 +71,9 @@ class DefaultAvatar(object):
     def __repr__(self):
         return f'<{self.__class__.__name__} name={self.name} value={self.value}>'
 
-    @classmethod
-    def for_(cls,user):
-        return cls.values[getattr(user,'discriminator',0)%cls.count]
-
     url=property(URLS.default_avatar_url)
-
+    
+    # predefined
     blue    = NotImplemented
     gray    = NotImplemented
     green   = NotImplemented

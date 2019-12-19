@@ -38,7 +38,7 @@ class Invite(object):
         else:
             self.created_at = parse_time(created_at_data)
         
-        self.target_type    = InviteTargetType.values[data.get('target_user_type',0)]
+        self.target_type    = InviteTargetType.INSTANCES[data.get('target_user_type',0)]
         
         try:
             target_user_data=data['target_user']

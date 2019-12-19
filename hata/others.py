@@ -1,21 +1,24 @@
 ﻿# -*- coding: utf-8 -*-
-__all__ = ('Relationship', 'AuditLogEvent', 'ContentFilterLevel',
-    'DISCORD_EPOCH', 'FriendRequestFlag', 'Gift', 'GuildFeature',
-    'HypesquadHouse', 'InviteTargetType', 'MFA', 'MessageActivity',
-    'MessageFlag', 'MessageNotificationLevel', 'MessageType', 'PremiumType',
-    'RelationshipType', 'Status', 'SystemChannelFlag', 'Theme', 'Unknown',
-    'UserFlag', 'VerificationLevel', 'VoiceRegion', 'elapsed_time',
-    'filter_content', 'id_to_time', 'is_id', 'is_mention', 'is_role_mention',
-    'is_user_mention', 'now_as_id', 'parse_oauth2_redirect_url', 'random_id',
-    'time_to_id', )
+__all__ = ('Relationship', 'ContentFilterLevel', 'DISCORD_EPOCH',
+    'FriendRequestFlag', 'Gift', 'HypesquadHouse', 'InviteTargetType', 'MFA',
+    'MessageActivity', 'MessageFlag', 'MessageNotificationLevel',
+    'MessageType', 'PremiumType', 'RelationshipType', 'Status',
+    'SystemChannelFlag', 'Theme', 'Unknown', 'UserFlag', 'VerificationLevel',
+    'VoiceRegion', 'filter_content', 'id_to_time', 'is_id', 'is_mention',
+    'is_role_mention', 'is_user_mention', 'now_as_id',
+    'parse_oauth2_redirect_url', 'random_id', 'time_to_id', )
 
-import random, re
+import random, re, sys
 from urllib.parse import _ALWAYS_SAFE_BYTES as ALWAYS_SAFE_BYTES,Quoter
 from datetime import datetime
 from base64 import b64encode
 from time import time as time_now
 from json import dumps as dump_to_json, loads as from_json
-from dateutil.relativedelta import relativedelta
+
+try:
+    from dateutil.relativedelta import relativedelta
+except ImportError:
+    relativedelta = None
 
 from .dereaddons_local import titledstr, modulize
 
@@ -49,33 +52,36 @@ def ext_from_base64(data):
     return data[11:data.find(';',11)]
     
 DISCORD_EPOCH=1420070400000
-#example date: "2016-03-31T19:15:39.954000+00:00"; "2019-04-28T15:14:38+00:00"
-##parse_time=dateutil.parser.parse #can cause errors, commented till future reviews
-##del dateutil
+# example dates:
+# "2016-03-31T19:15:39.954000+00:00"
+# "2019-04-28T15:14:38+00:00"
+# at edit:
+# "2019-07-17T18:52:50.758993+00:00" #this is before desuppress!
+# at desuppress:
+# "2019-07-17T18:52:50.758000+00:00"
 
-#old version:
-
-#the RP32 would end on : "(\d{6}).*", but at message_update these dates can be
-#rounded downwards, just to 3 decimal from the orginal 6
-#Example:
-#at edit        : "2019-07-17T18:52:50.758993+00:00" #this is before desuppress!
-#at desuppress  : "2019-07-17T18:52:50.758000+00:00"
-
-PARSE_TIME_RP32=re.compile('(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})\.(\d{3}).*')
-PARSE_TIME_RP25=re.compile('(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})\.*')
+PARSE_TIME_RP=re.compile('(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2}):(\\d{2})(?:\\.(\\d{3})?)?.*')
 
 def parse_time(timestamp):
-    if len(timestamp)==32:
-        pattern=PARSE_TIME_RP32
-    elif len(timestamp)==25:
-        pattern=PARSE_TIME_RP25
-    else:
-        raise ValueError(f'{timestamp!r} is not uses any of the defined patterns')
-    return datetime(*map(int,pattern.match(timestamp).groups()))
+    parsed=PARSE_TIME_RP.fullmatch(timestamp)
+    if parsed is None:
+        sys.stderr.write(f'Cannot parse timestamp: `{timestamp}`, returning` None`\n')
+        return None
     
-#older version:
-#def parse_time(timestamp):
-#    return datetime(*map(int,re.split(r'[^\d]',timestamp.replace('+00:00',''))))
+    year    = int(parsed.group(1))
+    month   = int(parsed.group(2))
+    day     = int(parsed.group(3))
+    hour    = int(parsed.group(4))
+    minute  = int(parsed.group(5))
+    second  = int(parsed.group(6))
+    micro   = parsed.group(7)
+    
+    if micro is None:
+        micro = 0
+    else:
+        micro = int(micro)
+    
+    return datetime(year, month, day, hour, minute, second, micro)
 
 def id_to_time(id_):
     return datetime.utcfromtimestamp(((id_>>22)+DISCORD_EPOCH)/1000.)
@@ -90,13 +96,17 @@ def to_json(data):
     return dump_to_json(data,separators=(',',':'),ensure_ascii=True)
 
 class VerificationLevel(object):
-    __slots__=('name', 'value')
-    values={}
+    # class related
+    INSTANCES = [NotImplemented] * 5
+    
+    # object related
+    __slots__=('name', 'value',)
+    
     def __init__(self,value,name):
         self.value=value
         self.name=name
         
-        self.values[value]=self
+        self.INSTANCES[value]=self
 
     def __str__(self):
         return self.name
@@ -106,7 +116,8 @@ class VerificationLevel(object):
 
     def __repr__(self):
         return f'{self.__class__.__name__}(value={self.value}, name=\'{self.name}\')'
-
+    
+    # predefined
     none    = NotImplemented
     low     = NotImplemented
     medium  = NotImplemented
@@ -120,21 +131,18 @@ VerificationLevel.high     = VerificationLevel(3,'high')
 VerificationLevel.extreme  = VerificationLevel(4,'extreme')
 
 class VoiceRegion(object):
-    class _vr_dict(dict):
-        def __missing__(self,id_):
-            return VoiceRegion._from_id(id_)
+    # class related
+    INSTANCES = {}
     
-    __slots__=('custom', 'deprecated', 'id', 'name', 'vip')
-    values=_vr_dict()
+    @classmethod
+    def get(cls,id_):
+        try:
+            voice_region=cls.INSTANCES[id_]
+        except KeyError:
+            voice_region=cls._from_id(id_)
+        
+        return voice_region
     
-    def __init__(self,name,id_,deprecated,vip):
-        self.name       = name
-        self.id         = id_
-        self.deprecated = deprecated
-        self.vip        = vip
-        self.custom     = False
-        self.values[id_]= self
-
     @classmethod
     def _from_id(cls,id_):
         name_parts      = id_.split('-')
@@ -148,36 +156,53 @@ class VoiceRegion(object):
         
         name=' '.join(name_parts)
         
-        self            = object.__new__(cls)
-        self.name       = name
-        self.id         = id_
-        self.deprecated = False
-        self.vip        = id_.startswith('vip-')
-        self.custom     = True
-        self.values[id_]= self
+        self                = object.__new__(cls)
+        self.name           = name
+        self.id             = id_
+        self.deprecated     = False
+        self.vip            = id_.startswith('vip-')
+        self.custom         = True
+        self.INSTANCES[id_] = self
         return self
         
     @classmethod
     def from_data(cls,data):
         id_=data['id']
-        if id_ in cls.values:
-            return cls.values[id_]
-        self            = object.__new__(cls)
-        self.name       = data['name']
-        self.id         = id_
-        self.deprecated = data['deprecated']
-        self.vip        = data['vip']
-        self.custom     = data['custom']
-        self.values[id_]= self
+        try:
+            return cls.INSTANCES[id_]
+        except KeyError:
+            pass
+        
+        self                = object.__new__(cls)
+        self.name           = data['name']
+        self.id             = id_
+        self.deprecated     = data['deprecated']
+        self.vip            = data['vip']
+        self.custom         = data['custom']
+        self.INSTANCES[id_] = self
+        
         return self
+    
+    # object related
+    __slots__=('custom', 'deprecated', 'id', 'name', 'vip',)
+    
+    def __init__(self,name,id_,deprecated,vip):
+        self.name           = name
+        self.id             = id_
+        self.deprecated     = deprecated
+        self.vip            = vip
+        self.custom         = False
+        self.INSTANCES[id_] = self
     
     def __str__(self):
         return self.id
     
     def __repr__(self):
         return f'<{self.__class__.__name__} name={self.name!r} id={self.id!r}>'
-
-    #normal
+    
+    # predefined
+    
+    # normal
     brazil          = NotImplemented
     eu_central      = NotImplemented
     eu_west         = NotImplemented
@@ -193,14 +218,14 @@ class VoiceRegion(object):
     us_east         = NotImplemented
     us_south        = NotImplemented
     us_west         = NotImplemented
-    #deprecated
+    # deprecated
     amsterdam       = NotImplemented
     frankfurt       = NotImplemented
     london          = NotImplemented
-    #vip
+    # vip
     vip_us_east     = NotImplemented
     vip_us_west     = NotImplemented
-    #vip + deprecated
+    # vip + deprecated
     vip_amsterdam   = NotImplemented
 
 VoiceRegion.brazil          = VoiceRegion('Brazil',         'brazil',       False,  False)
@@ -229,13 +254,17 @@ VoiceRegion.vip_us_west     = VoiceRegion('VIP US East',    'vip-us-east',  Fals
 VoiceRegion.vip_amsterdam   = VoiceRegion('VIP Amsterdam',  'vip-amsterdam',True,   True)
 
 class ContentFilterLevel(object):
-    __slots__=('name', 'value')
-    values={}
+    # class related
+    INSTANCES = [NotImplemented] * 3
+    
+    # object related
+    __slots__=('name', 'value', )
+    
     def __init__(self,value,name):
         self.value=value
         self.name=name
 
-        self.values[value]=self
+        self.INSTANCES[value]=self
 
     def __str__(self):
         return self.name
@@ -245,7 +274,8 @@ class ContentFilterLevel(object):
 
     def __repr__(self):
         return f'{self.__class__.__name__}(value={self.value}, name=\'{self.name}\')'
-
+    
+    # predefined
     disabled    = NotImplemented
     no_role     = NotImplemented
     everyone    = NotImplemented
@@ -255,13 +285,17 @@ ContentFilterLevel.no_role  = ContentFilterLevel(1,'no_role')
 ContentFilterLevel.everyone = ContentFilterLevel(2,'everyone')
 
 class HypesquadHouse(object):
-    __slots__=('name', 'value')
-    values={}
+    # class related
+    INSTANCES = [NotImplemented] * 4
+    
+    #object related
+    __slots__=('name', 'value', )
+    
     def __init__(self,value,name):
         self.value=value
         self.name=name
 
-        self.values[value]=self
+        self.INSTANCES[value]=self
 
     def __str__(self):
         return self.name
@@ -271,27 +305,36 @@ class HypesquadHouse(object):
 
     def __repr__(self):
         return f'{self.__class__.__name__}(value={self.value}, name=\'{self.name}\')'
-
+    
+    # predefined
+    none        = NotImplemented
     bravery     = NotImplemented
     brilliance  = NotImplemented
     balance     = NotImplemented
 
+HypesquadHouse.none         = HypesquadHouse(0,'none')
 HypesquadHouse.bravery      = HypesquadHouse(1,'bravery')
 HypesquadHouse.brilliance   = HypesquadHouse(2,'brilliance')
 HypesquadHouse.balance      = HypesquadHouse(3,'balance')
 
 
 class Status(object):
-    __slots__=('position', 'value')
-    values={}
+    # class related
+    INSTANCES = {}
+    
+    # object related
+    __slots__=('position', 'value', )
+    
     def __init__(self,value,position):
         self.value=value
         self.position=position
-        self.values[value]=self
+        self.INSTANCES[value]=self
 
     def __str__(self):
         return self.value
-
+    
+    name=property(__str__)
+    
     def __repr__(self):
         return f'<{self.__class__.__name__} value={self.value!r}>'
 
@@ -300,7 +343,7 @@ class Status(object):
             return self.position>other.position
         if isinstance(other,str):
             try:
-                other=type(self).values[other]
+                other=type(self).INSTANCES[other]
             except KeyError:
                 return NotImplemented
             return self.position>other.position
@@ -311,7 +354,7 @@ class Status(object):
             return self.position>=other.position
         if isinstance(other,str):
             try:
-                other=type(self).values[other]
+                other=type(self).INSTANCES[other]
             except KeyError:
                 return NotImplemented
             return self.position>=other.position
@@ -322,7 +365,7 @@ class Status(object):
             return self.position==other.position
         if isinstance(other,str):
             try:
-                other=type(self).values[other]
+                other=type(self).INSTANCES[other]
             except KeyError:
                 return NotImplemented
             return self.position==other.position
@@ -333,7 +376,7 @@ class Status(object):
             return self.position!=other.position
         if isinstance(other,str):
             try:
-                other=type(self).values[other]
+                other=type(self).INSTANCES[other]
             except KeyError:
                 return NotImplemented
             return self.position!=other.position
@@ -344,7 +387,7 @@ class Status(object):
             return self.position<=other.position
         if isinstance(other,str):
             try:
-                other=type(self).values[other]
+                other=type(self).INSTANCES[other]
             except KeyError:
                 return NotImplemented
             return self.position<=other.position
@@ -355,14 +398,13 @@ class Status(object):
             return self.position<other.position
         if isinstance(other,str):
             try:
-                other=type(self).values[other]
+                other=type(self).INSTANCES[other]
             except KeyError:
                 return NotImplemented
             return self.position<other.position
         return  NotImplemented
-
-    name=property(__str__)
-
+    
+    # predefined
     online      = NotImplemented
     idle        = NotImplemented
     dnd         = NotImplemented
@@ -376,13 +418,17 @@ Status.offline  = Status('offline',3)
 Status.invisible= Status('invisible',3)
 
 class MessageNotificationLevel(object):
-    __slots__=('name', 'value')
-    values={}
+    # class related
+    INSTANCES = [NotImplemented] * 2
+    
+    # object related
+    __slots__=('name', 'value', )
+    
     def __init__(self,value,name):
         self.value=value
         self.name=name
 
-        self.values[value]=self
+        self.INSTANCES[value]=self
 
     def __str__(self):
         return self.name
@@ -392,7 +438,8 @@ class MessageNotificationLevel(object):
 
     def __repr__(self):
         return f'{self.__class__.__name__}(value={self.value}, name=\'{self.name}\')'
-
+    
+    # predefined
     all_messages    = NotImplemented
     only_mentions   = NotImplemented
     
@@ -400,13 +447,17 @@ MessageNotificationLevel.all_messages   = MessageNotificationLevel(0,'all_messag
 MessageNotificationLevel.only_mentions  = MessageNotificationLevel(1,'only_mentions')
 
 class MFA(object):
-    __slots__=('name', 'value')
-    values={}
+    # class related
+    INSTANCES = [NotImplemented] * 2
+    
+    # object related
+    __slots__=('name', 'value', )
+    
     def __init__(self,value,name):
         self.value=value
         self.name=name
 
-        self.values[value]=self
+        self.INSTANCES[value]=self
 
     def __str__(self):
         return self.name
@@ -424,13 +475,17 @@ MFA.none    = MFA(0,'none')
 MFA.elevated= MFA(1,'elevated')
 
 class PremiumType(object):
-    __slots__=('name', 'value')
+    # class related
+    INSTANCES = [NotImplemented] * 3
+    
+    # object related
+    __slots__=('name', 'value',)
     values={}
     def __init__(self,value,name):
         self.value=value
         self.name=name
 
-        self.values[value]=self
+        self.INSTANCES[value]=self
 
     def __str__(self):
         return self.name
@@ -440,7 +495,8 @@ class PremiumType(object):
 
     def __repr__(self):
         return f'{self.__class__.__name__}(value={self.value}, name=\'{self.name}\')'
-
+    
+    # predefined
     none            = NotImplemented
     nitro_classic   = NotImplemented
     nitro           = NotImplemented
@@ -483,31 +539,46 @@ class UserFlag(int):
     @property
     def early_supporter(self):
         return (self>>9)&1
-
+    
     @property
     def team_user(self):
         return (self>>10)&1
     
+    @property
+    def system(self):
+        return (self>>11)&1
+    
     def __iter__(self):
         if self&1:
             yield 'discord_employee'
+            
         if (self>>1)&1:
             yield 'discord_partner'
+            
         if (self>>2)&1:
             yield 'bug_hunter'
+            
         if (self>>3)&1:
             yield 'hypesquad_bravery'
+            
         if (self>>6)&1:
             yield 'hypesquad_bravery'
+            
         if (self>>7)&1:
             yield 'hypesquad_brilliance'
+            
         if (self>>8)&1:
             yield 'hypesquad_balance'
+            
         if (self>>9)&1:
             yield 'early_supporter'
+            
         if (self>>10)&1:
             yield 'team_user'
 
+        if (self>>11)&1:
+            yield 'system'
+            
     def __repr__(self):
         return f'{self.__class__.__name__}({int.__repr__(self)})'
 
@@ -526,25 +597,46 @@ class MessageFlag(int):
     def embeds_suppressed(self):
         return (self>>2)&1
 
+    
+    @property
+    def source_message_deleted(self):
+        return (self>>3)&1
+    
+    @property
+    def urgent(self):
+        return (self>>4)&1
+    
     def __iter__(self):
         if self&1:
             yield 'crossposted'
+            
         if (self>>1)&1:
             yield 'is_crosspost'
+            
         if (self>>2)&1:
             yield 'embeds_suppressed'
 
+        if (self>>3)&1:
+            yield 'source_message_deleted'
+
+        if (self>>4)&1:
+            yield 'urgent'
+            
     def __repr__(self):
         return f'{self.__class__.__name__}({int.__repr__(self)})'
 
 class RelationshipType(object):
+    #class related
+    INSTANCES = [NotImplemented] * 5
+    
+    # object related
     __slots__=('name', 'value',)
-    values=[None,None,None,None,None]
+    
     def __init__(self,value,name):
         self.value=value
         self.name=name
 
-        self.values[value]=self
+        self.INSTANCES[value]=self
 
     def __str__(self):
         return self.name
@@ -554,7 +646,8 @@ class RelationshipType(object):
 
     def __repr__(self):
         return f'{self.__class__.__name__}(value={self.value}, name=\'{self.name}\')'
-
+    
+    # predefined
     stranger        = NotImplemented
     friend          = NotImplemented
     blocked         = NotImplemented
@@ -568,10 +661,10 @@ RelationshipType.received_request = RelationshipType(3,'received_request')
 RelationshipType.sent_request     = RelationshipType(4,'sent_request')
 
 class Relationship(object):
-    __slots__=('type', 'user')
+    __slots__=('type', 'user',)
     def __init__(self,client,user,data):
         self.user=user
-        self.type=RelationshipType.values[data['type']]
+        self.type=RelationshipType.INSTANCES[data['type']]
         client.relationships[user.id]=self
         
     def __repr__(self):
@@ -579,14 +672,18 @@ class Relationship(object):
 
 
 class MessageType(object):
-    __slots__=('name', 'value', 'convert')
-    values={}
+    # class related
+    INSTANCES = [NotImplemented] * 13
+    
+    # object related
+    __slots__=('name', 'value', 'convert',)
+    
     def __init__(self,value,name):
         self.value=value
         self.name=name
         self.convert=self._default_convert
 
-        self.values[value]=self
+        self.INSTANCES[value]=self
 
     def __str__(self):
         return self.name
@@ -600,7 +697,8 @@ class MessageType(object):
     @staticmethod
     def _default_convert(self):
         pass
-
+    
+    # predefined
     default                 = NotImplemented
     add_user                = NotImplemented
     remove_user             = NotImplemented
@@ -630,13 +728,17 @@ MessageType.new_guild_sub_t3      = MessageType(11,'new_guild_sub_t3')
 MessageType.new_follower_channel  = MessageType(12,'new_follower_channel')
 
 class MessageActivity(object):
-    __slots__=('name', 'value')
-    values={}
+    # class related
+    INSTANCES = [NotImplemented] * 6
+    
+    # object related
+    __slots__=('name', 'value', )
+    
     def __init__(self,value,name):
         self.value=value
         self.name=name
 
-        self.values[value]=self
+        self.INSTANCES[value]=self
 
     def __str__(self):
         return self.name
@@ -658,113 +760,6 @@ MessageActivity.join           = MessageActivity(1,'join')
 MessageActivity.spectate       = MessageActivity(2,'spectate')
 MessageActivity.listen         = MessageActivity(3,'listen')
 MessageActivity.join_request   = MessageActivity(5,'join_request')
-
-class AuditLogEvent(object):
-    __slots__=('name', 'value')
-    values={}
-    def __init__(self,value,name):
-        self.value=value
-        self.name=name
-
-        self.values[value]=self
-
-    def __str__(self):
-        return self.name
-
-    def __int__(self):
-        return self.value
-
-    def __repr__(self):
-        return f'{self.__class__.__name__}(value={self.value}, name=\'{self.name}\')'
-
-    GUILD_UPDATE            = NotImplemented
-    
-    CHANNEL_CREATE          = NotImplemented
-    CHANNEL_UPDATE          = NotImplemented
-    CHANNEL_DELETE          = NotImplemented
-    CHANNEL_OVERWRITE_CREATE= NotImplemented
-    CHANNEL_OVERWRITE_UPDATE= NotImplemented
-    CHANNEL_OVERWRITE_DELETE= NotImplemented
-    
-    MEMBER_KICK             = NotImplemented
-    MEMBER_PRUNE            = NotImplemented
-    MEMBER_BAN_ADD          = NotImplemented
-    MEMBER_BAN_REMOVE       = NotImplemented
-    MEMBER_UPDATE           = NotImplemented
-    MEMBER_ROLE_UPDATE      = NotImplemented
-    MEMBER_MOVE             = NotImplemented
-    MEMBER_DISCONNECT       = NotImplemented
-    BOT_ADD                 = NotImplemented
-    
-    ROLE_CREATE             = NotImplemented
-    ROLE_UPDATE             = NotImplemented
-    ROLE_DELETE             = NotImplemented
-    
-    INVITE_CREATE           = NotImplemented
-    INVITE_UPDATE           = NotImplemented
-    INVITE_DELETE           = NotImplemented
-    
-    WEBHOOK_CREATE          = NotImplemented
-    WEBHOOK_UPDATE          = NotImplemented
-    WEBHOOK_DELETE          = NotImplemented
-    
-    EMOJI_CREATE            = NotImplemented
-    EMOJI_UPDATE            = NotImplemented
-    EMOJI_DELETE            = NotImplemented
-    
-    MESSAGE_DELETE          = NotImplemented
-    MESSAGE_BULK_DELETE     = NotImplemented
-    MESSAGE_PIN             = NotImplemented
-    MESSAGE_UNPIN           = NotImplemented
-    
-    INTEGRATION_CREATE      = NotImplemented
-    INTEGRATION_UPDATE      = NotImplemented
-    INTEGRATION_DELETE      = NotImplemented
-
-AuditLogEvent.GUILD_UPDATE              = AuditLogEvent( 1,'GUILD_UPDATE')
-
-AuditLogEvent.CHANNEL_CREATE            = AuditLogEvent(10,'CHANNEL_CREATE')
-AuditLogEvent.CHANNEL_UPDATE            = AuditLogEvent(11,'CHANNEL_UPDATE')
-AuditLogEvent.CHANNEL_DELETE            = AuditLogEvent(12,'CHANNEL_DELETE')
-AuditLogEvent.CHANNEL_OVERWRITE_CREATE  = AuditLogEvent(13,'CHANNEL_OVERWRITE_CREATE')
-AuditLogEvent.CHANNEL_OVERWRITE_UPDATE  = AuditLogEvent(14,'CHANNEL_OVERWRITE_UPDATE')
-AuditLogEvent.CHANNEL_OVERWRITE_DELETE  = AuditLogEvent(15,'CHANNEL_OVERWRITE_DELETE')
-
-AuditLogEvent.MEMBER_KICK               = AuditLogEvent(20,'MEMBER_KICK')
-AuditLogEvent.MEMBER_PRUNE              = AuditLogEvent(21,'MEMBER_PRUNE')
-AuditLogEvent.MEMBER_BAN_ADD            = AuditLogEvent(22,'MEMBER_BAN_ADD')
-AuditLogEvent.MEMBER_BAN_REMOVE         = AuditLogEvent(23,'MEMBER_BAN_REMOVE')
-AuditLogEvent.MEMBER_UPDATE             = AuditLogEvent(24,'MEMBER_UPDATE')
-AuditLogEvent.MEMBER_ROLE_UPDATE        = AuditLogEvent(25,'MEMBER_ROLE_UPDATE')
-AuditLogEvent.MEMBER_MOVE               = AuditLogEvent(26,'MEMBER_MOVE')
-AuditLogEvent.MEMBER_DISCONNECT         = AuditLogEvent(27,'MEMBER_DISCONNECT')
-AuditLogEvent.BOT_ADD                   = AuditLogEvent(28,'MEMBER_ROLE_UPDATE')
-
-AuditLogEvent.ROLE_CREATE               = AuditLogEvent(30,'ROLE_CREATE')
-AuditLogEvent.ROLE_UPDATE               = AuditLogEvent(31,'ROLE_UPDATE')
-AuditLogEvent.ROLE_DELETE               = AuditLogEvent(32,'ROLE_DELETE')
-
-AuditLogEvent.INVITE_CREATE             = AuditLogEvent(40,'INVITE_CREATE')
-AuditLogEvent.INVITE_UPDATE             = AuditLogEvent(41,'INVITE_UPDATE')
-AuditLogEvent.INVITE_DELETE             = AuditLogEvent(42,'INVITE_DELETE')
-
-AuditLogEvent.WEBHOOK_CREATE            = AuditLogEvent(50,'WEBHOOK_CREATE')
-AuditLogEvent.WEBHOOK_UPDATE            = AuditLogEvent(51,'WEBHOOK_UPDATE')
-AuditLogEvent.WEBHOOK_DELETE            = AuditLogEvent(52,'WEBHOOK_DELETE')
-
-AuditLogEvent.EMOJI_CREATE              = AuditLogEvent(60,'EMOJI_CREATE')
-AuditLogEvent.EMOJI_UPDATE              = AuditLogEvent(61,'EMOJI_UPDATE')
-AuditLogEvent.EMOJI_DELETE              = AuditLogEvent(62,'EMOJI_DELETE')
-
-AuditLogEvent.MESSAGE_DELETE            = AuditLogEvent(72,'MESSAGE_DELETE')
-AuditLogEvent.MESSAGE_BULK_DELETE       = AuditLogEvent(73,'MESSAGE_BULK_DELETE')
-AuditLogEvent.MESSAGE_PIN               = AuditLogEvent(74,'MESSAGE_PIN')
-AuditLogEvent.MESSAGE_UNPIN             = AuditLogEvent(75,'MESSAGE_UNPIN')
-
-AuditLogEvent.INTEGRATION_CREATE        = AuditLogEvent(80,'INTEGRATION_CREATE')
-AuditLogEvent.INTEGRATION_UPDATE        = AuditLogEvent(81,'INTEGRATION_UPDATE')
-AuditLogEvent.INTEGRATION_DELETE        = AuditLogEvent(82 ,'INTEGRATION_DELETE')
-
 
 def multi_delete_time_limit():
     #2 weeks-1 minute since now, so if we delete a lot of messages, it wont mess up
@@ -859,128 +854,41 @@ def cchunkify(lines,lang='',limit=2000):
         result.append('\n'.join(shard))
     return result
 
-def elapsed_time(obj,limit=3,names=('years','months','days','hours','minutes','seconds')):
-    if type(obj) is datetime:
-        delta=relativedelta(datetime.utcnow(),obj)
-    elif type(obj) is relativedelta:
-        delta=obj
-    else:
-        raise TypeError(f'Expected, relativedelta or datetime, got {obj!r}')
-        
-    values=(delta.years,delta.months,delta.days,delta.hours,delta.minutes,delta.seconds)
-    result=[]
-    is_higher=None
-    for index in range(6):
-        value=values[index]
-        if is_higher is not None:
-            result.append(value)
-            continue
-        if value:
-            is_higher=index
-            result.append(value)
+if (relativedelta is not None):
+    __all__=(*__all__,'elapsed_time')
+    def elapsed_time(obj,limit=3,names=('years','months','days','hours','minutes','seconds')):
+        if type(obj) is datetime:
+            delta=relativedelta(datetime.utcnow(),obj)
+        elif type(obj) is relativedelta:
+            delta=obj
+        else:
+            raise TypeError(f'Expected, relativedelta or datetime, got {obj!r}')
+            
+        values=(delta.years,delta.months,delta.days,delta.hours,delta.minutes,delta.seconds)
+        result=[]
+        is_higher=None
+        for index in range(6):
+            value=values[index]
+            if is_higher is not None:
+                result.append(value)
+                continue
+            if value:
+                is_higher=index
+                result.append(value)
 
-    del result[limit:]
+        del result[limit:]
 
-    text=[]
-    for value,name in zip(result,names[is_higher:]):
-        if value<0:
-            value=-value
-        text.append(f'{value} {name}')
-    return ', '.join(text)
+        text=[]
+        for value,name in zip(result,names[is_higher:]):
+            if value<0:
+                value=-value
+            text.append(f'{value} {name}')
+        return ', '.join(text)
 
-class GuildFeature(object):
-    class _gf_dict(dict):
-        def __missing__(self,name):
-            return GuildFeature(name)
-    
-    values=_gf_dict()
-    
-    __slots__=('value',)
-
-    def __init__(self,value):
-        self.value=value
-        self.values[value]=self
-    
-    def __str__(self):
-        return self.value
-
-    name=property(__str__)
-    
-    def __repr__(self):
-        return f'{self.__class__.__name__}(name={self.name})'
-
-    def __gt__(self,other):
-        if type(self) is type(other):
-            return self.value>other.value
-        if isinstance(other,str):
-            return self.value>other
-        return NotImplemented
-
-    def __ge__(self,other):
-        if type(self) is type(other):
-            return self.value>=other.value
-        if isinstance(other,str):
-            return self.value>=other
-        return NotImplemented
-
-    def __eq__(self,other):
-        if type(self) is type(other):
-            return self.value==other.value
-        if isinstance(other,str):
-            return self.value==other
-        return NotImplemented
-
-    def __ne__(self,other):
-        if type(self) is type(other):
-            return self.value!=other.value
-        if isinstance(other,str):
-            return self.value!=other
-        return NotImplemented
-
-    def __le__(self,other):
-        if type(self) is type(other):
-            return self.value<=other.value
-        if isinstance(other,str):
-            return self.value<=other
-        return NotImplemented
-
-    def __lt__(self,other):
-        if type(self) is type(other):
-            return self.value<other.value
-        if isinstance(other,str):
-            return self.value<other
-        return  NotImplemented
-
-    splash              = NotImplemented
-    vip                 = NotImplemented
-    vanity              = NotImplemented
-    animated_icon       = NotImplemented
-    verified            = NotImplemented
-    partnered           = NotImplemented
-    more_emoji          = NotImplemented
-    discoverable        = NotImplemented
-    commerce            = NotImplemented
-    public              = NotImplemented
-    news                = NotImplemented
-    banner              = NotImplemented
-    member_list_disabled= NotImplemented
-
-GuildFeature.splash                 = GuildFeature('INVITE_SPLASH')
-GuildFeature.vip                    = GuildFeature('VIP_REGIONS')
-GuildFeature.vanity                 = GuildFeature('VANITY_URL')
-GuildFeature.animated_icon          = GuildFeature('ANIMATED_ICON')
-GuildFeature.verified               = GuildFeature('VERIFIED')
-GuildFeature.partnered              = GuildFeature('PARTNERED')
-GuildFeature.more_emoji             = GuildFeature('MORE_EMOJI')
-GuildFeature.discoverable           = GuildFeature('DISCOVERABLE')
-GuildFeature.commerce               = GuildFeature('COMMERCE')
-GuildFeature.public                 = GuildFeature('PUBLIC')
-GuildFeature.news                   = GuildFeature('NEWS')
-GuildFeature.banner                 = GuildFeature('BANNER')
-GuildFeature.member_list_disabled   = GuildFeature('MEMBER_LIST_DISABLED')
 
 class Unknown(object):
-    __slots__=('id', 'name', 'type')
+    __slots__=('id', 'name', 'type', )
+    
     def __init__(self,type_,id_,name=''):
         self.type=type_
         self.id=id_
@@ -1063,13 +971,17 @@ class Unknown(object):
         return id_to_time(self.id)
     
 class InviteTargetType(object):
+    # class related
+    INSTANCES = [NotImplemented] * 2
+    
+    # object related
     __slots__=('name', 'value')
-    values={}
+    
     def __init__(self,value,name):
         self.value=value
         self.name=name
 
-        self.values[value]=self
+        self.INSTANCES[value]=self
 
     def __str__(self):
         return self.name
@@ -1079,7 +991,8 @@ class InviteTargetType(object):
 
     def __repr__(self):
         return f'{self.__class__.__name__}(value={self.value}, name=\'{self.name}\')'
-
+    
+    # predefined
     NONE    = NotImplemented
     STREAM  = NotImplemented
 
@@ -1112,22 +1025,8 @@ def _parse_ih_fsa(value,animated):
     raise TypeError(f'Image hash can be `NoneType`, `str` or `int` type, got {value.__class__.__name__}')
 
 class FriendRequestFlag(object):
-    __slots__=('name', 'value')
-    values={}
-    def __init__(self,value,name):
-        self.value=value
-        self.name=name
-
-        self.values[value]=self
-
-    def __str__(self):
-        return self.name
-
-    def __int__(self):
-        return self.value
-
-    def __repr__(self):
-        return f'{self.__class__.__name__}(value={self.value}, name=\'{self.name}\')'
+    # class related
+    INSTANCES = [NotImplemented] * 5
     
     @classmethod
     def decode(cls,data):
@@ -1143,7 +1042,25 @@ class FriendRequestFlag(object):
             
             key=mutual_guilds+(mutual_friends<<1)
         
-        return cls.values[key]
+        return cls.INSTANCES[key]
+    
+    # object related
+    __slots__=('name', 'value',)
+    
+    def __init__(self,value,name):
+        self.value=value
+        self.name=name
+
+        self.INSTANCES[value]=self
+
+    def __str__(self):
+        return self.name
+
+    def __int__(self):
+        return self.value
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}(value={self.value}, name=\'{self.name}\')'
     
     def encode(self):
         value=self.value
@@ -1165,6 +1082,7 @@ class FriendRequestFlag(object):
         # should not happen
         return {}
     
+    # predefined
     none                        = NotImplemented
     mutual_guilds               = NotImplemented
     mutual_friends              = NotImplemented
@@ -1178,11 +1096,13 @@ FriendRequestFlag.mutual_guilds_and_friends = FriendRequestFlag(3,'mutual_guilds
 FriendRequestFlag.all                       = FriendRequestFlag(4,'all')
 
 class Theme(object):
+    INSTANCES = {}
+    
     __slots__=('value',)
     values={}
     def __init__(self,value):
         self.value=value
-        self.values[value]=self
+        self.INSTANCES[value]=self
 
     def __str__(self):
         return self.value

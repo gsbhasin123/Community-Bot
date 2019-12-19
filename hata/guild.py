@@ -1,6 +1,6 @@
 ﻿# -*- coding: utf-8 -*-
 __all__ = ('GWChannelReflection', 'GWUserReflection', 'Guild', 'GuildEmbed',
-    'GuildWidget', )
+    'GuildFeature', 'GuildWidget', )
 
 import re
 
@@ -10,8 +10,8 @@ from hata.futures import Task
 
 from .client_core import CACHE_PRESENCE, GUILDS
 from .others import _parse_ih_fsa, _parse_ih_fs, id_to_time, EMOJI_NAME_RP, \
-    VoiceRegion, Status, GuildFeature, VerificationLevel, SystemChannelFlag,\
-    MessageNotificationLevel, MFA, ContentFilterLevel
+    VoiceRegion, Status, VerificationLevel, MessageNotificationLevel, MFA,  \
+    SystemChannelFlag, ContentFilterLevel
     
 from .user import User, PartialUser, VoiceState, UserBase, ZEROUSER
 from .role import Role
@@ -26,6 +26,109 @@ from .oauth2 import parse_preferred_locale, DEFAULT_LOCALE
 VoiceClient=NotImplemented
 
 LARGE_LIMIT=250 #can be between 50 and 250
+
+class GuildFeature(object):
+    # class related
+    INSTANCES={}
+    
+    @classmethod
+    def get(cls,value):
+        try:
+            guild_feature=cls.INSTANCES[value]
+        except KeyError:
+            guild_feature=cls(value)
+        
+        return guild_feature
+    
+    # object related
+    __slots__=('value',)
+    
+    def __init__(self,value):
+        self.value=value
+        self.INSTANCES[value]=self
+    
+    def __str__(self):
+        return self.value
+
+    name=property(__str__)
+    
+    def __repr__(self):
+        return f'{self.__class__.__name__}(name={self.name})'
+
+    def __gt__(self,other):
+        if type(self) is type(other):
+            return self.value>other.value
+        if isinstance(other,str):
+            return self.value>other
+        return NotImplemented
+
+    def __ge__(self,other):
+        if type(self) is type(other):
+            return self.value>=other.value
+        if isinstance(other,str):
+            return self.value>=other
+        return NotImplemented
+
+    def __eq__(self,other):
+        if type(self) is type(other):
+            return self.value==other.value
+        if isinstance(other,str):
+            return self.value==other
+        return NotImplemented
+
+    def __ne__(self,other):
+        if type(self) is type(other):
+            return self.value!=other.value
+        if isinstance(other,str):
+            return self.value!=other
+        return NotImplemented
+
+    def __le__(self,other):
+        if type(self) is type(other):
+            return self.value<=other.value
+        if isinstance(other,str):
+            return self.value<=other
+        return NotImplemented
+
+    def __lt__(self,other):
+        if type(self) is type(other):
+            return self.value<other.value
+        if isinstance(other,str):
+            return self.value<other
+        return  NotImplemented
+    
+    # predefined
+    animated_icon       = NotImplemented
+    banner              = NotImplemented
+    commerce            = NotImplemented
+    discoverable        = NotImplemented
+    featurable          = NotImplemented
+    member_list_disabled= NotImplemented
+    more_emoji          = NotImplemented
+    news                = NotImplemented
+    partnered           = NotImplemented
+    public              = NotImplemented
+    public_disabled     = NotImplemented
+    splash              = NotImplemented
+    vanity              = NotImplemented
+    verified            = NotImplemented
+    vip                 = NotImplemented
+
+GuildFeature.animated_icon          = GuildFeature('ANIMATED_ICON')
+GuildFeature.banner                 = GuildFeature('BANNER')
+GuildFeature.commerce               = GuildFeature('COMMERCE')
+GuildFeature.discoverable           = GuildFeature('DISCOVERABLE')
+GuildFeature.featurable             = GuildFeature('FEATURABLE')
+GuildFeature.member_list_disabled   = GuildFeature('MEMBER_LIST_DISABLED')
+GuildFeature.more_emoji             = GuildFeature('MORE_EMOJI')
+GuildFeature.news                   = GuildFeature('NEWS')
+GuildFeature.partnered              = GuildFeature('PARTNERED')
+GuildFeature.public                 = GuildFeature('PUBLIC')
+GuildFeature.public_disabled        = GuildFeature('PUBLIC_DISABLED')
+GuildFeature.splash                 = GuildFeature('INVITE_SPLASH')
+GuildFeature.vanity                 = GuildFeature('VANITY_URL')
+GuildFeature.verified               = GuildFeature('VERIFIED')
+GuildFeature.vip                    = GuildFeature('VIP_REGIONS')
 
 class GuildEmbed(object):
     __slots__=('channel', 'enabled', 'guild',)
@@ -72,7 +175,7 @@ class GWUserReflection(UserBase):
         self.nick=data.get('nick')
 
         self.is_bot=data.get('bot',False)
-        self.status=Status.values[data['status']]
+        self.status=Status.INSTANCES[data['status']]
         self.activity_name=data.get('game',None)
 
     @property
@@ -262,6 +365,7 @@ def PartialGuild(data):
     guild.clients=[]
     guild.content_filter=ContentFilterLevel.disabled
     # description will be set down
+    guild.discovery_splash=0
     guild.embed_channel=None
     guild.embed_enabled=False
     guild.emojis={}
@@ -280,6 +384,7 @@ def PartialGuild(data):
     guild.premium_tier=0
     guild.region=VoiceRegion.eu_central
     guild.roles=autoposlist()
+    guild.rules_channel=None
     # splash will be set down
     guild.system_channel=None
     guild.system_channel_flags=SystemChannelFlag.NONE
@@ -322,7 +427,7 @@ def PartialGuild(data):
     except KeyError:
         pass
     else:
-        guild.verification_level=VerificationLevel.values[verification_level]
+        guild.verification_level=VerificationLevel.INSTANCES[verification_level]
 
     try:
         features=data['features']
@@ -330,7 +435,7 @@ def PartialGuild(data):
         guild.features=[]
     else:
         features.sort()
-        guild.features=[GuildFeature.values[feature] for feature in features]
+        guild.features=[GuildFeature.get(feature) for feature in features]
 
     return guild
 
@@ -340,13 +445,14 @@ class Guild(object):
     __slots__=('__weakref__', '_boosters', '_cache_perm', 'afk_channel',
         'afk_timeout', 'all_channel', 'all_role', 'available', 'banner',
         'booster_count', 'channels', 'clients', 'content_filter',
-        'description', 'embed_channel', 'embed_enabled', 'emojis', 'features',
-        'has_animated_icon', 'icon', 'id', 'is_large', 'max_presences',
-        'max_users', 'message_notification', 'mfa', 'name', 'owner',
-        'preferred_locale', 'premium_tier', 'region', 'roles', 'splash',
-        'system_channel', 'system_channel_flags', 'user_count', 'users',
-        'vanity_code', 'verification_level', 'voice_states', 'webhooks',
-        'webhooks_uptodate', 'widget_channel', 'widget_enabled',)
+        'description', 'discovery_splash', 'embed_channel', 'embed_enabled',
+        'emojis', 'features', 'has_animated_icon', 'icon', 'id', 'is_large',
+        'max_presences', 'max_users', 'message_notification', 'mfa', 'name',
+        'owner', 'preferred_locale', 'premium_tier', 'region', 'roles',
+        'rules_channel', 'splash', 'system_channel', 'system_channel_flags',
+        'user_count', 'users', 'vanity_code', 'verification_level',
+        'voice_states', 'webhooks', 'webhooks_uptodate', 'widget_channel',
+        'widget_enabled',)
 
     def __new__(cls,data,client):
         guild_id=int(data['id'])
@@ -477,7 +583,7 @@ class Guild(object):
     @classmethod
     def precreate(cls,guild_id,**kwargs):
         processable={}
-        for key in ('name','banner', 'icon', 'has_animated_icon', 'splash'):
+        for key in ('name','banner', 'icon', 'has_animated_icon', 'splash', 'discovery_splash'):
             try:
                 value=kwargs.pop(key)
             except KeyError:
@@ -505,6 +611,7 @@ class Guild(object):
             guild.clients=[]
             guild.content_filter=ContentFilterLevel.disabled
             guild.description=''
+            guild.discovery_splash=0
             guild.embed_channel=None
             guild.embed_enabled=False
             guild.emojis={}
@@ -523,6 +630,7 @@ class Guild(object):
             guild.premium_tier=0
             guild.region=VoiceRegion.eu_central
             guild.roles=autoposlist()
+            guild.rules_channel=None
             guild.splash=0
             guild.system_channel=None
             guild.system_channel_flags=SystemChannelFlag.NONE
@@ -541,20 +649,27 @@ class Guild(object):
                 return guild
 
         try:
-            guild.banner= _parse_ih_fs(processable.pop('banner'))
+            guild.banner=_parse_ih_fs(processable.pop('banner'))
         except KeyError:
             pass
+        
         try:
             guild.icon,guild.has_animated_icon=_parse_ih_fsa(
                 processable.pop('icon'),
                 processable.pop('has_animated_icon',False))
         except KeyError:
             pass
+        
         try:
-            guild.splash= _parse_ih_fs(processable.pop('splash'))
+            guild.splash=_parse_ih_fs(processable.pop('splash'))
         except KeyError:
             pass
-
+        
+        try:
+            guild.discovery_splash=_parse_ih_fs(processable.pop('discovery_splash'))
+        except KeyError:
+            pass
+        
         return guild
 
     def __str__(self):
@@ -579,6 +694,8 @@ class Guild(object):
     icon_url_as=URLS.guild_icon_url_as
     splash_url=property(URLS.guild_splash_url)
     splash_url_as=URLS.guild_splash_url_as
+    discovery_splash_url=property(URLS.guild_discovery_splash_url)
+    discovery_splash_url_as=URLS.guild_discovery_splash_url_as
     embed_url=URLS.guild_embed_url
     widget_url=URLS.guild_widget_url
 
@@ -619,8 +736,7 @@ class Guild(object):
             emoji._delete()
 
         self.voice_states.clear()
-
-        guild_id=self.id
+        
         users=self.users
 
         for user in list(users.values()):
@@ -788,7 +904,7 @@ class Guild(object):
             except KeyError:
                 pass
             else:
-                user.status=Status.values[presence['status']]
+                user.status=Status.INSTANCES[presence['status']]
                 user.statuses=presence['client_status']
                 user.activities=[Activity(activity_data) for activity_data in presence['activities']]
 
@@ -1034,8 +1150,14 @@ class Guild(object):
         if self.splash!=splash:
             old['splash']=self.splash
             self.splash=splash
-
-        region=VoiceRegion.values[data['region']]
+        
+        discovery_splash=data.get('discovery_splash',None)
+        discovery_splash=0 if discovery_splash is None else int(discovery_splash,16)
+        if self.discovery_splash!=discovery_splash:
+            old['discovery_splash']=self.discovery_splash
+            self.discovery_splash=discovery_splash
+        
+        region=VoiceRegion.get(data['region'])
         if self.region is not region:
             old['region']=region
             self.region=region
@@ -1045,22 +1167,22 @@ class Guild(object):
             old['afk_timeout']=self.afk_timeout
             self.afk_timeout=afk_timeout
 
-        verification_level=VerificationLevel.values[data['verification_level']]
+        verification_level=VerificationLevel.INSTANCES[data['verification_level']]
         if self.verification_level is not verification_level:
             old['verification_level']=self.verification_level
             self.verification_level=verification_level
 
-        message_notification=MessageNotificationLevel.values[data['default_message_notifications']]
+        message_notification=MessageNotificationLevel.INSTANCES[data['default_message_notifications']]
         if self.message_notification is not message_notification:
             old['message_notification']=self.message_notification
             self.message_notification=message_notification
 
-        mfa=MFA.values[data['mfa_level']]
+        mfa=MFA.INSTANCES[data['mfa_level']]
         if self.mfa!=mfa:
             old['mfa']=self.mfa
             self.mfa=mfa
 
-        content_filter=ContentFilterLevel.values[data.get('explicit_content_filter',0)]
+        content_filter=ContentFilterLevel.INSTANCES[data.get('explicit_content_filter',0)]
         if self.content_filter is not content_filter:
             old['content_filter']=self.content_filter
             self.content_filter=content_filter
@@ -1076,7 +1198,7 @@ class Guild(object):
             features=[]
         else:
             features.sort()
-            features=[GuildFeature.values[feature] for feature in features]
+            features=[GuildFeature.get(feature) for feature in features]
         if self.features!=features:
             old['features']=listdifference(self.features,features)
             self.features=features
@@ -1133,7 +1255,6 @@ class Guild(object):
             self.embed_enabled=embed_enabled
 
         embed_channel_id=data.get('embed_channel_id',None)
-
         if embed_channel_id is None:
             embed_channel=None
         else:
@@ -1141,7 +1262,16 @@ class Guild(object):
         if self.embed_channel is not embed_channel:
             old['embed_channel']=self.embed_channel
             self.embed_channel=embed_channel
-
+        
+        rules_channel_id=data.get('rules_channel_id',None)
+        if rules_channel_id is None:
+            rules_channel=None
+        else:
+            rules_channel=self.all_channel[int(rules_channel_id)]
+        if self.rules_channel is not rules_channel:
+            old['rules_channel']=self.rules_channel
+            self.rules_channel=rules_channel
+        
         description=data.get('description',None)
         description='' if description is None else description
         if self.description!=description:
@@ -1202,7 +1332,7 @@ class Guild(object):
         #ignoring 'voice_states'
         
         self.name=data['name']
-            
+        
         icon=data.get('icon',None)
         if icon is None:
             self.icon=0
@@ -1213,21 +1343,24 @@ class Guild(object):
         else:
             self.icon=int(icon,16)
             self.has_animated_icon=False
-
+        
         splash=data.get('splash',None)
         self.splash=0 if splash is None else int(splash,16)
-
-        self.region=VoiceRegion.values[data['region']]
+        
+        discovery_splash=data.get('discovery_splash',None)
+        self.discovery_splash=0 if discovery_splash is None else int(discovery_splash,16)
+        
+        self.region=VoiceRegion.get(data['region'])
             
         self.afk_timeout=data['afk_timeout']
                 
-        self.verification_level=VerificationLevel.values[data['verification_level']]
+        self.verification_level=VerificationLevel.INSTANCES[data['verification_level']]
 
-        self.message_notification=MessageNotificationLevel.values[data['default_message_notifications']]
+        self.message_notification=MessageNotificationLevel.INSTANCES[data['default_message_notifications']]
 
-        self.mfa=MFA.values[data['mfa_level']]
+        self.mfa=MFA.INSTANCES[data['mfa_level']]
 
-        self.content_filter=ContentFilterLevel.values[data.get('explicit_content_filter',0)]
+        self.content_filter=ContentFilterLevel.INSTANCES[data.get('explicit_content_filter',0)]
 
         self.available=not data.get('unavailable',False)               
 
@@ -1237,7 +1370,7 @@ class Guild(object):
             self.features.clear()
         else:
             features.sort()
-            self.features=[GuildFeature.values[feature] for feature in features]
+            self.features=[GuildFeature.get(feature) for feature in features]
 
         system_channel_id=data['system_channel_id']
         if system_channel_id is None:
@@ -1273,7 +1406,13 @@ class Guild(object):
             self.embed_channel=None
         else:
             self.embed_channel=self.all_channel[int(embed_channel_id)]
-
+        
+        rules_channel_id=data.get('rules_channel_id',None)
+        if rules_channel_id is None:
+            self.rules_channel=None
+        else:
+            self.rules_channel=self.all_channel[int(rules_channel_id)]
+        
         description=data.get('description',None)
         self.description='' if description is None else description
 

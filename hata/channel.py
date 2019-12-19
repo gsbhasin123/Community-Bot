@@ -957,7 +957,9 @@ class ChannelText(ChannelGuildBase,ChannelTextBase):
             guild.widget_channel=None    
         if self is guild.embed_channel:
             guild.embed_channel=None
-
+        if self is guild.rules_channel:
+            guild.rules_channel=None
+            
         self.category.channels.remove(self)
         self.category=None
         

@@ -59,10 +59,11 @@ class payload_superclass:
         self.value      = value
         self.encoding   = encoding
         self.filename   = filename
-        if headers:
-            self.headers = multidict_titled(headers)
-            if content_type is sentinel and CONTENT_TYPE in self.headers:
-                content_type = self.headers[CONTENT_TYPE]
+        if (headers is not None) and headers:
+            headers = multidict_titled(headers)
+            self.headrs=headers
+            if content_type is sentinel and CONTENT_TYPE in headers:
+                content_type = headers[CONTENT_TYPE]
         else:
             self.headers=None
             
@@ -81,18 +82,22 @@ class payload_superclass:
     def content_type(self):
         if self._content_type is not None:
             return self._content_type
-        elif self.filename is not None:
+        elif (self.filename is not None):
             mime = mimetypes.guess_type(self.filename)[0]
             return 'application/octet-stream' if mime is None else mime
         else:
             return payload_superclass._default_content_type
 
-    def set_content_disposition(self, disptype, quote_fields=True, **params):
-        if self.headers is None:
-            self.headers = multidict_titled()
+    def set_content_disposition(self, disptype, params, quote_fields=True):
+        headers=self.headers
+        if headers is None:
+            headers = multidict_titled()
+            self.headers=headers
+        else:
+            headers.popall(CONTENT_DISPOSITION,None)
         
-        self.headers[CONTENT_DISPOSITION] = content_disposition_header(
-            disptype, quote_fields=quote_fields, **params)
+        headers[CONTENT_DISPOSITION] = content_disposition_header(
+            disptype, params, quote_fields=quote_fields)
 
 
 class BytesPayload(payload_superclass):
@@ -140,8 +145,8 @@ class IOBasePayload(payload_superclass):
 
         payload_superclass.__init__(self,value,*args,**kwargs)
 
-        if self.filename is not None and disposition is not None:
-            self.set_content_disposition(disposition,filename=self.filename)
+        if (self.filename is not None) and (disposition is not None):
+            self.set_content_disposition(disposition,{'filename':self.filename})
 
     async def write(self,writer):
         try:
@@ -467,7 +472,7 @@ def content_disposition_filename(params,name='filename'):
 
 
 class MultipartResponseWrapper:
-    __slots__=['resp', 'stream']
+    __slots__=('resp', 'stream',)
     #Wrapper around the :class:`MultipartBodyReader` to take care about
     #underlying connection and close it when it needs in.
 
@@ -1087,9 +1092,8 @@ class MultipartWriter(payload_superclass):
         for part,headers,encoding,te_encoding in self.parts:
             await writer.write(b'--'+self._boundary+b'\r\n') #fb strings pls!
             await writer.write(headers)
-
+            
             if encoding or te_encoding:
-
                 w = MultipartPayloadWriter(writer)
                 if encoding:
                     w.enable_compression(encoding)

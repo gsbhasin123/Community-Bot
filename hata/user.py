@@ -176,7 +176,6 @@ class UserBase(object):
     def __init_subclass__(cls):
         if 'guild_profiles' in cls.__slots__:
             cls.color       = cls.__rich__.color
-            cls.mention_at  = cls.__rich__.mention_at
             cls.name_at     = cls.__rich__.name_at
             cls.mentioned_in= cls.__rich__.mentioned_in
 
@@ -211,7 +210,7 @@ class UserBase(object):
 
     @property
     def mention(self):
-        return f'<@{self.id}>'
+        return f'<@!{self.id}>'
     
     @property
     def created_at(self):
@@ -225,11 +224,11 @@ class UserBase(object):
     
     @property
     def default_avatar_url(self):
-        return DefaultAvatar.values[self.discriminator%DefaultAvatar.count].url
+        return DefaultAvatar.INSTANCES[self.discriminator%DefaultAvatar.COUNT].url
 
     @property
     def default_avatar(self):
-        return DefaultAvatar.values[self.discriminator%DefaultAvatar.count]
+        return DefaultAvatar.INSTANCES[self.discriminator%DefaultAvatar.COUNT]
 
     #for sorting users
     def __gt__(self,other):
@@ -297,9 +296,6 @@ class UserBase(object):
     def color(self,guild):
         return Color(0)
 
-    def mention_at(self,guild):
-        return f'<@{self.id}>'
-
     def name_at(self,guild):
         return self.name
 
@@ -325,21 +321,6 @@ class UserBase(object):
                         return role.color
                 break
             return Color(0)
-
-        def mention_at(self,guild):
-            while True:
-                if guild is None:
-                    break
-                try:
-                    nick=self.guild_profiles[guild].nick
-                except KeyError:
-                    pass
-                else:
-                    if nick is None:
-                        break
-                    return f'<@!{self.id}>'
-                break
-            return self.mention
 
         def name_at(self,guild):
             while True:
@@ -805,7 +786,7 @@ class User(UserBase):
             status=data['status']
             if self.status.value!=status:
                 old['status']=self.status
-                self.status=Status.values[status]
+                self.status=Status.INSTANCES[status]
             
         activity_datas=data['activities']
         if activity_datas:
@@ -849,7 +830,7 @@ class User(UserBase):
         return old
 
     def _update_presence_no_return(self,data):
-        self.status=Status.values[data['status']]
+        self.status=Status.INSTANCES[data['status']]
         
         try:
             # not included sometimes
@@ -967,7 +948,7 @@ class User(UserBase):
             user.id=user_id
             user.guild_profiles={}
             user.is_bot=data.get('bot',False)
-            user.status=Status.values[data['status']]
+            user.status=Status.INSTANCES[data['status']]
             user.statuses={}
             user.activities=[]
             user.partial=False

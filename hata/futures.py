@@ -107,6 +107,11 @@ _ignore_frame(__spec__.origin   , '__step'          , 'result=coro.send(None)'  
 _ignore_frame(__spec__.origin   , '__wakeup'        , 'future.result()'                 ,)
 _ignore_frame(__spec__.origin   , 'wait'            , 'return self.result()'            ,)
 
+from . import dereaddons_local
+_ignore_frame(dereaddons_local.__spec__.origin  , '__call__', 'return self.func(*self.args)'            ,)
+_ignore_frame(dereaddons_local.__spec__.origin  , '__call__', 'return self.func(*self.args,**kwargs)'   ,)
+del dereaddons_local
+
 def render_frames_to_list(frames,extend=None):
     if extend is None:
         extend  = []
@@ -2020,6 +2025,7 @@ class _chain_remover(object):
     __slots__=('target',)
     def __init__(self,target):
         self.target=target
+
     def __call__(self,future):
         #remove chainer
         callbacks=self.target._callbacks
@@ -2027,6 +2033,10 @@ class _chain_remover(object):
             callback=callbacks[index]
             if (type(callback) is _future_chainer) and (callback.target is future):
                 del callbacks[index]
+                if __debug__:
+                    # because this is might be the only place, where we
+                    # retrieve the result, we will just silence it.
+                    future.__silence__()
                 break
 
 def shield(awaitable,loop):

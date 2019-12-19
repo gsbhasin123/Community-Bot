@@ -10,12 +10,13 @@ ChannelText=NotImplemented
 
 class WebhookType(object):
     __slots__=('name', 'value')
-    values=[NotImplemented,NotImplemented,NotImplemented]
+    INSTANCES=[NotImplemented] * 3
+    
     def __init__(self,value,name):
         self.value=value
         self.name=name
 
-        self.values[value]=self
+        self.INSTANCES[value]=self
 
     def __str__(self):
         return self.name
@@ -25,7 +26,8 @@ class WebhookType(object):
 
     def __repr__(self):
         return f'{self.__class__.__name__}(value={self.value}, name=\'{self.name}\')'
-
+    
+    # prefened
     none        = NotImplemented
     bot         = NotImplemented
     server      = NotImplemented
@@ -82,7 +84,7 @@ class Webhook(UserBase):
             webhook.id=webhook_id
         
         webhook._update_no_return(data)
-        webhook.type=WebhookType.values[data['type']]
+        webhook.type=WebhookType.INSTANCES[data['type']]
         return webhook
 
     @classmethod
@@ -150,7 +152,7 @@ class Webhook(UserBase):
                 type_           = kwargs.pop('type_',1)
                 if type(type_) is int:
                     try:
-                        type_=WebhookType.values[type_]
+                        type_=WebhookType.INSTANCES[type_]
                     except IndexError as err:
                         raise ValueError(f'Invalid WebhookType : {type_}') from err
                 elif type(type_) is WebhookType:

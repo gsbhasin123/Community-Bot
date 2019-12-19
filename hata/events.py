@@ -2,28 +2,24 @@
 __all__ = ('CommandProcesser', 'ContentParser', 'Cooldown',
     'GUI_STATE_CANCELLED', 'GUI_STATE_CANCELLING', 'GUI_STATE_READY',
     'GUI_STATE_SWITCHING_CTX', 'GUI_STATE_SWITCHING_PAGE', 'Pagination',
-    'ReactionAddWaitfor', 'ReactionDeleteWaitfor', 'multievent',
-    'prefix_by_guild', 'wait_and_continue', 'wait_for_message',
+    'ReactionAddWaitfor', 'ReactionDeleteWaitfor', 'WaitAndContinue',
+    'multievent', 'prefix_by_guild', 'wait_for_message',
     'wait_for_reaction', )
 
 import re
 from weakref import WeakKeyDictionary
 
-from .futures import Task, sleep, PENDING
+from .futures import Task, Future
 
 from .others import USER_MENTION_RP
-from .parsers import check_passed,EventHandlerBase,EventDescriptor,compare_converted,check_name
+from .parsers import check_passed, EventHandlerBase, EventDescriptor,       \
+    compare_converted, check_name, check_passed_tuple, asynclist
 from .emoji import BUILTIN_EMOJIS
 from .exceptions import DiscordException
 from .client_core import KOKORO
 
 #Invite this as well, to shortcut imports
 from .events_compiler import ContentParser
-
-class asynclist(list):
-    async def __call__(self,*args):
-        for func in reversed(self):
-            await func(*args)
 
 COMMAND_RP=re.compile(' *([^ \t\\n]*) *(.*)')
 
@@ -33,8 +29,8 @@ class CommandProcesser(EventHandlerBase):
         'mention_prefix', 'prefix', 'prefixfilter', 'waitfors',)
     __event_name__='message_create'
     def __init__(self,prefix,ignorecase=True,mention_prefix=True):
-        self.default_event=EventDescriptor.default_event
-        self.invalid_command=EventDescriptor.default_event
+        self.default_event=EventDescriptor.DEFAULT_EVENT
+        self.invalid_command=EventDescriptor.DEFAULT_EVENT
         self.mention_prefix=mention_prefix
         self.waitfors=WeakKeyDictionary()
         self.commands={}
@@ -95,26 +91,31 @@ class CommandProcesser(EventHandlerBase):
             self.invalid_command=func
         else:
             #called first
-            func=check_passed(func,3)
-            self.commands[case]=func
+            argcount,func = check_passed_tuple(func,(3,2),)
+            if argcount==2:
+                needs_content=False
+            else:
+                needs_content=True
+            self.commands[case]=(needs_content,func)
+        
         return func
     
     def __delevent__(self,func,case):
         if case=='default_event':
             if func is self.default_event:
-                self.default_event=EventDescriptor.default_event
+                self.default_event=EventDescriptor.DEFAULT_EVENT
             else:
                 raise ValueError(f'The passed \'{case}\' ({func!r}) is not the same as the already loaded one: {self.default_event!r}')
         
         elif case=='invalid_command':
             if func is self.invalid_command:
-                self.invalid_command=EventDescriptor.default_event
+                self.invalid_command=EventDescriptor.DEFAULT_EVENT
             else:
                 raise ValueError(f'The passed \'{case}\' ({func!r}) is not the same as the already loaded one: {self.invalid_command!r}')
         
         else:
             try:
-                actual=self.commands[case]
+                argcount,actual=self.commands[case]
             except KeyError as err:
                 raise ValueError(f'The passed \'{case}\' is not added as a command right now.')
             
@@ -131,9 +132,9 @@ class CommandProcesser(EventHandlerBase):
         else:
             if type(event) is asynclist:
                 for event in event:
-                    Task(event(message,),client.loop)
+                    Task(event(client,message,),client.loop)
             else:
-                Task(event(message,),client.loop)
+                Task(event(client,message,),client.loop)
         
         if message.author.is_bot:
             return
@@ -157,21 +158,26 @@ class CommandProcesser(EventHandlerBase):
                 command=command.lower()
                 
                 try:
-                    event=self.commands[command]
+                    needs_content,event=self.commands[command]
                 except KeyError:
                     break
-                return (await event(client,message,content))
+                
+                if needs_content:
+                    return await event(client,message,content)
+                return await event(client,message)
         
         else:
             command,content=result
             command=command.lower()
             
             try:
-                event=self.commands[command]
+                needs_content,event=self.commands[command]
             except KeyError:
                 return (await self.invalid_command(client,message,command,content))
-            else:
-                return (await event(client,message,content))
+
+            if needs_content:
+                return await event(client,message,content)
+            return await event(client,message)
         
         return (await self.default_event(client,message))
             
@@ -210,12 +216,12 @@ class CommandProcesser(EventHandlerBase):
                 ]
         
         default_event=self.default_event
-        if default_event is not EventDescriptor.default_event:
+        if default_event is not EventDescriptor.DEFAULT_EVENT:
             result.append(', default_event=')
             result.append(default_event.__repr__())
         
         invalid_command=self.invalid_command
-        if invalid_command is not EventDescriptor.default_event:
+        if invalid_command is not EventDescriptor.DEFAULT_EVENT:
             result.append(', invalid_command=')
             result.append(invalid_command.__repr__())
         
@@ -241,9 +247,9 @@ class ReactionAddWaitfor(EventHandlerBase):
 
         if type(event) is asynclist:
             for event in event:
-                Task(event(emoji,user,),client.loop)
+                Task(event(client,emoji,user,),client.loop)
         else:
-            Task(event(emoji,user,),client.loop)
+            Task(event(client,emoji,user,),client.loop)
             
 class ReactionDeleteWaitfor(EventHandlerBase):
     __slots__=('waitfors',)
@@ -255,9 +261,6 @@ class ReactionDeleteWaitfor(EventHandlerBase):
     append  = ReactionAddWaitfor.append
     remove  = ReactionAddWaitfor.remove
     __call__= ReactionAddWaitfor.__call__
-
-#if target is message, we wait for emoji
-#at the case of channel we wait for message
 
 class multievent(object):
     __slots__=('events',)
@@ -273,86 +276,44 @@ class multievent(object):
         for event in self.events:
             event.remove(wrapper,target)
 
-class waitfor_wrapper(object):
-    __slots__=('client', 'event', 'feature', 'target', 'timeout', 'waiter',)
-    #feature should be a class, with __init__ and **coro** __call__ magic methods
-    def __init__(self,client,feature,timeout,event,target,):
-        self.client=client
-        self.feature=feature
+class Timeouter(object):
+    __slots__=('loop', 'handler', 'owner', 'timeout')
+    def __init__(self,loop,owner,timeout):
+        self.loop=loop
+        self.owner=owner
         self.timeout=timeout
-        self.waiter=None
+        self.handler=loop.call_later(timeout,self.__step,self)
         
-        self.event=event
-        self.target=target
-        event.append(self,target)
+    @staticmethod
+    def __step(self):
+        timeout=self.timeout
+        if timeout>0.0:
+            self.handler=self.loop.call_later(timeout,self.__step,self)
+            self.timeout=0.0
+            return
         
-        Task(self.run(),client.loop)
+        self.handler=None
+        owner=self.owner
+        if owner is None:
+            return
         
-    async def run(self):
-        loop=self.client.loop
-        exception=None
-        try:
-            while self.timeout:
-                #we check for new timeout every time, if u wanna extend it
-                timeout=self.timeout
-                self.timeout=0.
-                self.waiter=sleep(timeout,loop)
-                await self.waiter
-            exception=TimeoutError()
-        except BaseException as err:
-            self.waiter=None
-            #if anything happens we notify the client
-            await self.client.events.error(self.client,f'{self.__class__.__name__}.run; block: try',err)
-            exception=err
-            #on failure/timeout we cancel the event
-        finally:
-            self.waiter=None
-            self.event.remove(self,self.target)
-            cancel=self.feature.cancel
-            if cancel is not None:
-                self.feature.cancel=None
-                try:
-                    await cancel(self.feature,self,exception)
-                except BaseException as err:
-                    await self.client.events.error(self.client,f'{self.__class__.__name__}.run; block: finally',err)
-    
-    def __call__(self,*args):
-        #we just return, it will be awaited
-        return self.feature(self,*args)
-    
+        self.owner=None
+        
+        canceller=owner.canceller
+        if canceller is None:
+            return
+        owner.canceller=None
+        Task(canceller(owner,TimeoutError()),self.loop)
+        
+        
     def cancel(self):
-        self.timeout=0.
-        if self.waiter is not None:
-            self.waiter.cancel_handles()
-            self.waiter.set_result(None)
-            self.waiter=None
-            
-#classes should be passed.
-#they should implement:
-#    __init__ (self,...) |CORO|
-#    __call__(self,emoji,user) |CORO|
-#    cancel(obj,wrapper,exception=None) |CORO| !or None! (Not method!)
-#
-#`start` is gets called when called as early as it gets space on the asyncloop
-#If init fails the event gets cleaned up form the waitfors, then
-#`cancel` will be called if applicable
-#
-#If we get any emojis at the message, `call` gets called. If u wait only on 1
-#good reaction, u can call instantly `wrapper.cancel` to start the cleanup
-#
-#`wrapper.cancel` calls the event's `cancel` if applicable, then removes the
-#event from the waitfors
-#
-#If any errors happen at `cancel`, it will show up on `client.events.error`,
-#because "Errors should never pass silently"
-#
-#If you set timeout to 0 will trigger autoclose, so dont do it.
-#
-#If you want to extend the timeout, you can modify `wrapper.timeout` to the given
-#value. When the current timeout ends, it will pickup the new one.
-#
-#
-#on exception calls: "client.events.error"
+        handler=self.handler
+        if handler is None:
+            return
+        
+        self.handler=None
+        handler.cancel()
+        self.owner=None
 
 GUI_STATE_READY          = 0
 GUI_STATE_SWITCHING_PAGE = 1
@@ -360,48 +321,55 @@ GUI_STATE_CANCELLING     = 2
 GUI_STATE_CANCELLED      = 3
 GUI_STATE_SWITCHING_CTX  = 4
 
-
 class Pagination(object):
     LEFT2   = BUILTIN_EMOJIS['track_previous']
     LEFT    = BUILTIN_EMOJIS['arrow_backward']
     RIGHT   = BUILTIN_EMOJIS['arrow_forward']
     RIGHT2  = BUILTIN_EMOJIS['track_next']
-    CROSS   = BUILTIN_EMOJIS['x']
-    EMOJIS  = (LEFT2,LEFT,RIGHT,RIGHT2,CROSS,)
+    CANCEL  = BUILTIN_EMOJIS['x']
+    EMOJIS  = (LEFT2,LEFT,RIGHT,RIGHT2,CANCEL,)
     
-    __slots__=('cancel', 'channel', 'page', 'pages', 'task_flag',)
+    __slots__=('canceller', 'channel', 'client', 'message', 'page', 'pages',
+        'task_flag', 'timeouter')
+    
     async def __new__(cls,client,channel,pages,timeout=240.,message=None):
         self=object.__new__(cls)
+        self.client=client
+        self.channel=channel
         self.pages=pages
         self.page=0
-        self.channel=channel
-        self.cancel=cls._cancel
+        self.canceller=cls._canceller
         self.task_flag=GUI_STATE_READY
-
+        self.message=message
+        self.timeouter=None
+        
         if message is None:
             message = await client.message_create(channel,embed=pages[0])
-
+            self.message=message
+        
         if not channel.cached_permissions_for(client).can_add_reactions:
             return self
 
         message.weakrefer()
+        
         if len(self.pages)>1:
             for emoji in self.EMOJIS:
                 await client.reaction_add(message,emoji)
         else:
-            await client.reaction_add(message,self.CROSS)
-
-        waitfor_wrapper(client,self,timeout,multievent(client.events.reaction_add,client.events.reaction_delete),message,)
+            await client.reaction_add(message,self.CANCEL)
+        
+        self.timeouter=Timeouter(client.loop,self,timeout=timeout)
+        client.events.reaction_add.append(self,message)
+        client.events.reaction_delete.append(self,message)
         return self
     
-    async def __call__(self,wrapper,emoji,user):
+    async def __call__(self,client,emoji,user):
         if user.is_bot or (emoji not in self.EMOJIS):
             return
         
-        client=wrapper.client
-        message=wrapper.target
-        can_manage_messages=self.channel.cached_permissions_for(client).can_manage_messages
+        message=self.message
         
+        can_manage_messages=self.channel.cached_permissions_for(client).can_manage_messages
         if can_manage_messages:
             if not message.did_react(emoji,user):
                 return
@@ -410,8 +378,8 @@ class Pagination(object):
         task_flag=self.task_flag
         if task_flag!=GUI_STATE_READY:
             if task_flag==GUI_STATE_SWITCHING_PAGE:
-                if emoji is self.CROSS:
-                    task_flag=GUI_STATE_CANCELLING
+                if emoji is self.CANCEL:
+                    self.task_flag=GUI_STATE_CANCELLING
                 return
 
             # ignore GUI_STATE_CANCELLED and GUI_STATE_SWITCHING_CTX
@@ -421,22 +389,28 @@ class Pagination(object):
             if emoji is self.LEFT:
                 page=self.page-1
                 break
+                
             if emoji is self.RIGHT:
                 page=self.page+1
                 break
-            if emoji is self.CROSS:
+                
+            if emoji is self.CANCEL:
                 self.task_flag=GUI_STATE_CANCELLED
                 try:
                     await client.message_delete(message)
                 except DiscordException:
                     pass
-                return wrapper.cancel()
+                self.cancel()
+                return
+            
             if emoji is self.LEFT2:
                 page=0
                 break
+                
             if emoji is self.RIGHT2:
                 page=len(self.pages)-1
                 break
+            
             return
         
         if page<0:
@@ -449,25 +423,30 @@ class Pagination(object):
 
         self.page=page
         self.task_flag=GUI_STATE_SWITCHING_PAGE
+        
         try:
             await client.message_edit(message,embed=self.pages[page])
         except DiscordException:
             self.task_flag=GUI_STATE_CANCELLED
-            return wrapper.cancel()
-        else:
-            if self.task_flag==GUI_STATE_CANCELLING:
-                self.task_flag=GUI_STATE_CANCELLED
-                if can_manage_messages:
-                    try:
-                        await client.message_delete(message)
-                    except DiscordException:
-                        pass
-                return wrapper.cancel()
-            else:
-                self.task_flag=GUI_STATE_READY
+            self.cancel()
+            return
+        
+        if self.task_flag==GUI_STATE_CANCELLING:
+            self.task_flag=GUI_STATE_CANCELLED
+            if can_manage_messages:
+                try:
+                    await client.message_delete(message)
+                except DiscordException:
+                    pass
 
-        if wrapper.timeout<240.:
-            wrapper.timeout+=30.
+            self.cancel()
+            return
+            
+        self.task_flag=GUI_STATE_READY
+        
+        timeouter=self.timeouter
+        if timeouter.timeout<240.:
+            timeouter.timeout+=30.
             
     @staticmethod
     async def reaction_remove(client,message,emoji,user):
@@ -476,36 +455,59 @@ class Pagination(object):
         except DiscordException:
             pass
     
-    @staticmethod
-    async def _cancel(self,wrapper,exception):
+    async def _canceller(self,exception,):
+        client=self.client
+        message=self.message
+        
+        client.events.reaction_add.remove(self,message)
+        client.events.reaction_delete.remove(self,message)
+        
         if self.task_flag==GUI_STATE_SWITCHING_CTX:
             # the message is not our, we should not do anything with it.
             return
 
         self.task_flag=GUI_STATE_CANCELLED
+        
         if exception is None:
             return
+        
         if isinstance(exception,TimeoutError):
-            client=wrapper.client
             if self.channel.cached_permissions_for(client).can_manage_messages:
                 try:
-                    await client.reaction_clear(wrapper.target)
+                    await client.reaction_clear(message)
                 except DiscordException:
                     pass
             return
+        
+        timeouter=self.timeouter
+        if timeouter is not None:
+            timeouter.cancel()
         #we do nothing
+    
+    def cancel(self):
+        canceller=self.canceller
+        if canceller is None:
+            return
+        
+        self.canceller=None
+        
+        timeouter=self.timeouter
+        if timeouter is not None:
+            timeouter.cancel()
+        
+        return Task(canceller(self,None),self.client.loop)
     
     def __repr__(self):
         result = [
             '<', self.__class__.__name__,
-            ' pages=', self.pages.__len__().__repr__(),
-            ', page=', self.page.__repr__(),
-            ', channel=', self.channel.__repr__(),
+            ' pages=', repr(len(self.pages)),
+            ', page=', repr(self.page),
+            ', channel=', repr(self.channel),
             ', task_flag='
                 ]
         
         task_flag=self.task_flag
-        result.append(task_flag.__repr__())
+        result.append(repr(task_flag))
         result.append(' (')
         
         task_flag_name = (
@@ -520,52 +522,71 @@ class Pagination(object):
         result.append(')>')
         
         return ''.join(result)
-        
-class wait_and_continue(object):
-    __slots__=('cancel', 'case', 'event', 'future',)
-    def __init__(self,client,future,case,target,event,timeout):
-        self.cancel=type(self)._default_cancel
+
+class WaitAndContinue(object):
+    __slots__=('canceller', 'check', 'event', 'future', 'target', 'timeouter')
+    def __init__(self, future, check, target, event, timeout):
+        self.canceller=self.__class__._canceller
         self.future=future
-        self.case=case
+        self.check=check
         self.event=event
+        self.target=target
+        self.timeouter=Timeouter(future._loop,self,timeout)
+        event.append(self,target)
         
-        waitfor_wrapper(client,self,timeout,event,target,)
-        
-    async def __call__(self,wrapper,*args):
-        result=self.case(*args)
+    async def __call__(self, client, *args):
+        result = self.check(*args)
         if type(result) is bool:
-            if result:
-                if len(args)==1:
-                    self.future.set_result_if_pending(args[0],)
-                else:
-                    self.future.set_result_if_pending(args,)
+            if not result:
+                return
                 
-                wrapper.cancel()
+            if len(args)==1:
+                self.future.set_result_if_pending(args[0],)
+            else:
+                self.future.set_result_if_pending(args,)
+        
         else:
             args=(*args,result,)
             self.future.set_result_if_pending(args,)
-            
-            wrapper.cancel()
+        
+        self.cancel()
+        
+    async def _canceller(self,exception):
+        self.event.remove(self,self.target)
+        if exception is None:
+            self.future.set_result_if_pending(None)
+            return
+        
+        self.future.set_exception_if_pending(exception)
+        
+        if not isinstance(exception,TimeoutError):
+            return
 
-    async def _default_cancel(self,wrapper,exception):
-        future=self.future
-        if future._state is PENDING:
-            if exception is None:
-                future.cancel()
-            else:
-                future.set_exception_if_pending(exception)
-            #we do nothing
+        timeouter=self.timeouter
+        if timeouter is not None:
+            timeouter.cancel()
+        
+    def cancel(self):
+        canceller=self.canceller
+        if canceller is None:
+            return
+        
+        timeouter=self.timeouter
+        if timeouter is not None:
+            timeouter.cancel()
+        
+        return Task(canceller(self,None),self.future._loop)
 
 
-async def wait_for_reaction(client,message,case,timeout):
-    future=client.loop.create_future()
-    wait_and_continue(client,future,case,message,client.events.reaction_add,timeout)
-    return (await future)
+def wait_for_reaction(client,message,case,timeout):
+    future=Future(client.loop)
+    WaitAndContinue(future,case,message,client.events.reaction_add,timeout)
+    return future
 
-async def wait_for_message(client,channel,case,timeout):
-    future=client.loop.create_future()
-    wait_and_continue(client,future,case,channel,client.events.message_create,timeout)
-    return (await future)
+def wait_for_message(client,channel,case,timeout):
+    future=Future(client.loop)
+    WaitAndContinue(future,case,channel,client.events.message_create,timeout)
+    return future
 
 class prefix_by_guild(dict):
     __slots__=('default', 'orm',)
@@ -714,7 +735,7 @@ class Cooldown(object):
             if case is None:
                 case=''
             self.__name__=case
-            self.__func__=EventDescriptor.default_event
+            self.__func__=EventDescriptor.DEFAULT_EVENT
             return self._wrapper
         
         self.__name__=check_name(func,case)
@@ -752,7 +773,7 @@ class Cooldown(object):
             if case is None:
                 case=''
             self.__name__=case
-            self.__func__=EventDescriptor.default_event
+            self.__func__=EventDescriptor.DEFAULT_EVENT
             return self._wrapper
         
         self.__name__=check_name(func,case)

@@ -245,7 +245,7 @@ class CeilTimeout(Timeout):
             self.cancel_handler=self.loop.call_at(ceil(self.loop.time()+self.timeout),self._cancel_task)
         return self
 
-def content_disposition_header(disptype,quote_fields=True,**params):
+def content_disposition_header(disptype,params,quote_fields=True):
     #Sets Content-Disposition header.
     #
     #disptype is a disposition type: inline, attachment, form-data.

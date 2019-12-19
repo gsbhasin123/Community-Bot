@@ -1,5 +1,5 @@
 ﻿# -*- coding: utf-8 -*-
-__all__= ('Client', 'Typer', 'Settings', 'Achievement')
+__all__ = ('Client', 'Typer', 'Settings', 'Achievement',)
 
 import re, sys
 from math import ceil
@@ -14,17 +14,17 @@ from .py_formdata import Formdata
 from .py_hdrs import AUTHORIZATION
 
 from .others import Status, UserFlag, log_time_converter, _parse_ih_fsa,    \
-    VoiceRegion, ContentFilterLevel, PremiumType, HypesquadHouse, random_id,\
+    VoiceRegion, ContentFilterLevel, PremiumType, MessageNotificationLevel, \
     bytes_to_base64, FriendRequestFlag, ext_from_base64, Theme, now_as_id,  \
-    to_json, multi_delete_time_limit, VerificationLevel, GuildFeature,      \
-    MessageNotificationLevel, RelationshipType, parse_time
+    to_json, multi_delete_time_limit, VerificationLevel, RelationshipType,  \
+    random_id, parse_time, id_to_time
 
 from .user import User, USERS, GuildProfile, UserBase
 from .emoji import Emoji, PartialEmoji
 from .channel import ChannelCategory, ChannelGuildBase, ChannelPrivate,     \
     ChannelText, ChannelGroup, message_relativeindex, cr_pg_channel_object, \
     message_at_index, messages_till_index, MessageIterator, CHANNEL_TYPES
-from .guild import Guild, PartialGuild, GuildEmbed, GUILDS, GuildWidget
+from .guild import Guild, PartialGuild, GuildEmbed, GuildWidget, GuildFeature
 from .http import DiscordHTTPClient, URLS, CDN_ENDPOINT, VALID_ICON_FORMATS,\
     VALID_ICON_FORMATS_EXTENDED
 from .role import Role
@@ -38,7 +38,7 @@ from .oauth2 import Connection, parse_locale, DEFAULT_LOCALE, AO2Access,    \
     UserOA2, parse_locale_optional
 from .exceptions import DiscordException
 from .client_core import CLIENTS, start_clients, CACHE_USER, CACHE_PRESENCE,\
-    KOKORO
+    KOKORO, GUILDS
 from .voice_client import VoiceClient
 from .activity import ActivityUnknown
 from .integration import Integration
@@ -137,7 +137,8 @@ class Client(UserBase):
     __slots__ = (
         'guild_profiles', 'is_bot', 'partial', #default user
         'activities', 'status', 'statuses', #presence
-        'email', 'flags', 'locale', 'mfa', 'premium_type', 'verified', #OA2
+        'email', 'flags', 'locale', 'mfa', 'premium_type', 'system', #OA2
+        'verified',
         '__dict__', '_activity', '_gateway_pair', 'application', 'calls', #Client all the way down
         'channels',  'events', 'gateway', 'guild_profiles', 'http', 'loop',
         'mar_token', 'private_channels', 'ready_state', 'relationships',
@@ -212,9 +213,9 @@ class Client(UserBase):
         if status is not None:
             if type(status) is str:
                 try:
-                    status=Status.values[status]
+                    status=Status.INSTANCES[status]
                 except KeyError:
-                    raise ValueError(f'Expected status: {", ".join([v for v in Status.values])}; got {status!r}')
+                    raise ValueError(f'Expected status: {", ".join(list(Status.INSTANCES))}; got {status!r}')
             elif type(status) is not Status:
                 raise TypeError(f'Expected status types are: str, Status, got {status!r}')
             if status is Status.offline:
@@ -277,10 +278,11 @@ class Client(UserBase):
             self.avatar     = int(avatar,16)
             self.has_animated_avatar=False
         self.mfa            = data.get('mfa_enabled',False)
+        self.system         = data.get('system',False)
         self.verified       = data.get('verified',False)
         self.email          = data.get('email','')
         self.flags          = UserFlag(data.get('flags',0))
-        self.premium_type   = PremiumType.values[data.get('premium_type',0)]
+        self.premium_type   = PremiumType.INSTANCES[data.get('premium_type',0)]
         self.locale         = parse_locale(data)
 
         self.partial        = False
@@ -440,7 +442,7 @@ class Client(UserBase):
     async def client_edit_presence(self,activity=None,status=None,afk=False):
         if isinstance(status,str):
             try:
-                status=Status.values[status]
+                status=Status.INSTANCES[status]
             except KeyError as err:
                 raise ValueError(f'Invalid status {status}') from err
             self.settings.status=status
@@ -590,9 +592,6 @@ class Client(UserBase):
         header[AUTHORIZATION]=f'Bearer {access.access_token}'
         data = await self.http.user_guilds(header)
         return [PartialGuild(guild_data) for guild_data in data]
-
-    #achievements (they are all broken right now)
-    #TODO : when discord wont be broken test them
     
     async def achievement_get_all(self):
         data = await self.http.achievement_get_all(self.application.id)
@@ -624,7 +623,6 @@ class Client(UserBase):
         return Achievement(data)
     
     async def achievement_edit(self,achievement,name=None,description=None,secret=None,secure=None,icon=_spaceholder):
-        #TODO : do we need full payload?
         data={}
         if (name is not None):
             data['name'] = {
@@ -653,8 +651,10 @@ class Client(UserBase):
     
     async def achievement_delete(self,achievement):
         await self.http.achievement_delete(self.application.id,achievement.id)
-
-    # needs 'applications.store.update' scope granted (?)
+    
+    # https://github.com/discordapp/discord-api-docs/issues/1230
+    # unintentionally documented and will never work.
+    
     # DiscordException UNAUTHORIZED (401): 401: Unauthorized
     async def user_achievements(self,access):
         header=multidict_titled()
@@ -662,6 +662,10 @@ class Client(UserBase):
         
         data = await self.http.user_achievements(self.application.id,header)
         return [Achievement(achievement_data) for achievement_data in data]
+    
+    # https://github.com/discordapp/discord-api-docs/issues/1230
+    # Seems like first update must come from game SDK.
+    # Only secure updates are supported, if they are even.
     
     # when updating secure achievement:
     #     DiscordException NOT FOUND (404), code=10029: Unknown Entitlement
@@ -1431,7 +1435,7 @@ class Client(UserBase):
         if not isinstance(channel,ChannelGuildBase):
             #bulk delete is available only at guilds
             for message in messages:
-                await self.http.message_delete(channel_id,message.id)
+                await self.http.message_delete(channel_id,message.id,reason)
             return
                     
         messages.sort(reverse=True)
@@ -1593,13 +1597,25 @@ class Client(UserBase):
                 await self.http.message_delete_multiple(channel_id,{'messages':message_ids},reason)
                         
 
-    async def message_edit(self,message,content=None,embed=None,*args,**kwargs):
+    async def message_edit(self,message,content=None,embed=_spaceholder,suppress=None):
         data={}
         if (content is not None):
             data['content']=content
         
-        if embed is not None:
-            data['embed']=embed.to_data()
+        if (embed is not _spaceholder):
+            if embed is None:
+                embed_data=None
+            else:
+                embed_data=embed.to_data()
+            
+            data['embed']=embed_data
+        
+        if (suppress is not None):
+            if suppress:
+                flags=message.flags|0b00000100
+            else:
+                flags=message.flags&0b11111011
+            data['flags']=flags
             
         await self.http.message_edit(message.channel.id,message.id,data)
 
@@ -1878,13 +1894,15 @@ class Client(UserBase):
         data = await self.http.guild_prune_estimate(guild.id,{'days':days})
         return data['pruned']
 
-    #splash is only available for guilds with INVITE_SPLASH feature.
-    #banner is only available for guilds with BANNER feature.
+    # splash is only available for guilds with INVITE_SPLASH feature.
+    # banner is only available for guilds with BANNER feature.
+    # rules_channel is available only for guilds with DISCOVERABLE feature?
     async def guild_edit(self, guild, name=None, icon=_spaceholder,
-            splash=_spaceholder, afk_channel=_spaceholder,
-            system_channel=_spaceholder, owner=None, region=None,
-            afk_timeout=None,verification_level=None, content_filter=None,
-            message_notification=None, description=None, banner=_spaceholder,
+            splash=_spaceholder, discovery_splash=_spaceholder,
+            banner=_spaceholder, afk_channel=_spaceholder,
+            system_channel=_spaceholder, rules_channel=_spaceholder,
+            owner=None,region=None, afk_timeout=None, verification_level=None,
+            content_filter=None, message_notification=None, description=None,
             system_channel_flags=None, reason=None):
 
         data={}
@@ -1895,41 +1913,65 @@ class Client(UserBase):
                 raise ValueError(f'Guild\'s name\'s length can be between 2-100, got {name_ln}')
             data['name']=name
         
-        if icon is _spaceholder:
-            pass
-        elif icon is None:
-            data['icon']=None
-        else:
-            icon_data=bytes_to_base64(icon)
-            ext=ext_from_base64(icon_data)
-            if ext not in (VALID_ICON_FORMATS_EXTENDED if (GuildFeature.animated_icon in guild.features) else VALID_ICON_FORMATS):
-                raise ValueError(f'Invalid icon type: {ext}')
-            data['icon']=icon_data
+        if (icon is not _spaceholder):
+            if icon is None:
+                data['icon']=None
+            else:
+                icon_data=bytes_to_base64(icon)
+                ext=ext_from_base64(icon_data)
+                if ext not in (VALID_ICON_FORMATS_EXTENDED if (GuildFeature.animated_icon in guild.features) else VALID_ICON_FORMATS):
+                    raise ValueError(f'Invalid icon type: {ext}')
+                data['icon']=icon_data
+        
+        if (banner is not _spaceholder):
+            if GuildFeature.banner not in guild.features:
+                raise ValueError('The guild has no `BANNER` feature')
             
-        if (verification_level is not None):
-            data['verification_level']=verification_level.value
-
-        if GuildFeature.splash in guild.features:
-            if splash is _spaceholder:
-                pass
-            elif splash is None:
+            if banner is None:
+                 data['banner']=None
+            else:
+                banner_data=bytes_to_base64(banner)
+                ext=ext_from_base64(banner_data)
+                if ext not in VALID_ICON_FORMATS:
+                    raise ValueError(f'Invalid banner type: {ext}')
+                data['banner']=banner_data
+        
+        if (splash is not _spaceholder):
+            if GuildFeature.splash not in guild.features:
+                raise ValueError('The guild has no `SPLASH` feature')
+            if splash is None:
                  data['splash']=None
             else:
                 splash_data=bytes_to_base64(splash)
                 ext=ext_from_base64(splash_data)
                 if ext not in VALID_ICON_FORMATS:
-                    raise ValueError(f'Invalid splash type: {ext}')
+                    raise ValueError(f'Invalid splash type: {ext!r}')
                 data['splash']=splash_data
-        else:
-            if (splash is not _spaceholder):
-                raise ValueError('The guild has no splash feature')
+        
+        if (discovery_splash is not _spaceholder):
+            if GuildFeature.discoverable not in guild.features:
+                raise ValueError('The guild has no `DISCOVERABLE` feature')
             
+            if discovery_splash is None:
+                 data['discovery_splash']=None
+            else:
+                discovery_splash_data=bytes_to_base64(banner)
+                ext=ext_from_base64(discovery_splash_data)
+                if ext not in VALID_ICON_FORMATS:
+                    raise ValueError(f'Invalid discovery_splash type: {ext}')
+                data['discovery_splash']=discovery_splash_data
+        
         if (afk_channel is not _spaceholder):
             data['afk_channel_id']=None if afk_channel is None else afk_channel.id
         
         if (system_channel is not _spaceholder):
             data['system_channel_id']=None if system_channel is None else system_channel.id
-            
+        
+        if (rules_channel is not _spaceholder):
+            if GuildFeature.discoverable not in guild.features:
+                raise ValueError('The guild has no `DISCOVERABLE` feature')
+            data['rules_channel_id']=None if rules_channel is None else rules_channel.id
+        
         if (owner is not None):
             if (guild.owner!=self):
                 raise ValueError('You must be owner to transfer ownership')
@@ -1942,7 +1984,10 @@ class Client(UserBase):
             if afk_timeout not in (60,300,900,1800,3600):
                 raise ValueError('Afk timeout should be 60, 300, 900, 1800, 3600  seconds!')
             data['afk_timeout']=afk_timeout
-
+        
+        if (verification_level is not None):
+            data['verification_level']=verification_level.value
+        
         if (content_filter is not None):
             data['explicit_content_filter']=content_filter.value
 
@@ -1951,21 +1996,6 @@ class Client(UserBase):
 
         if (description is not None):
             data['description']=description if description else None
-
-        if GuildFeature.banner in guild.features:
-            if banner is _spaceholder:
-                pass
-            elif banner is None:
-                 data['banner']=None
-            else:
-                banner_data=bytes_to_base64(banner)
-                ext=ext_from_base64(banner_data)
-                if ext not in VALID_ICON_FORMATS:
-                    raise ValueError(f'Invalid banner type: {ext}')
-                data['banner']=banner_data
-        else:
-            if (banner is not _spaceholder):
-                raise ValueError('The guild has no banner feature')
 
         if (system_channel_flags is not None):
             data['system_channel_flags']=system_channel_flags
@@ -2082,8 +2112,8 @@ class Client(UserBase):
         data = await self.http.audit_logs(guild.id,data)
         return AuditLog(data,guild)
     
-    def audit_log_iterator(self,*args,**kwargs):
-        return AuditLogIterator(self,*args,**kwargs)
+    def audit_log_iterator(self, guild, user=None, event=None):
+        return AuditLogIterator(self, guild, user=user, event=event)
 
     #users
 
@@ -2500,14 +2530,14 @@ class Client(UserBase):
         return Invite(data)
 
     # 'target_user_id' :
-    #    DiscordException BAD REQUEST (400), code=50035: Invalid Form Body
-    #    target_user_type.GUILD_INVITE_INVALID_TARGET_USER_TYPE('Invalid target user type')
-    # 'target_user_id', as 0:
+    #     DiscordException BAD REQUEST (400), code=50035: Invalid Form Body
+    #     target_user_type.GUILD_INVITE_INVALID_TARGET_USER_TYPE('Invalid target user type')
+    # 'target_user_type', as 0:
     #     DiscordException BAD REQUEST (400), code=50035: Invalid Form Body
     #     target_user_type.BASE_TYPE_CHOICES('Value must be one of (1,).')
-    # 'target_user_id', as 1:
-    #    DiscordException BAD REQUEST (400), code=50035: Invalid Form Body
-    #    target_user_type.GUILD_INVITE_INVALID_TARGET_USER_TYPE('Invalid target user type')
+    # 'target_user_type', as 1:
+    #     DiscordException BAD REQUEST (400), code=50035: Invalid Form Body
+    #     target_user_type.GUILD_INVITE_INVALID_TARGET_USER_TYPE('Invalid target user type')
     # 'target_user_id' and 'target_user_type' together:
     #    DiscordException BAD REQUEST (400), code=50035: Invalid Form Body
     #    target_user_id.GUILD_INVITE_INVALID_STREAMER('The specified user is currently not streaming in this channel')
@@ -2520,7 +2550,7 @@ class Client(UserBase):
         try:
             voice_state=guild.voice_states[user_id]
         except ValueError:
-            raise ValueError('The user must stream at a voice channel of the guild!')
+            raise ValueError('The user must stream at a voice channel of the guild!') from None
 
         if not voice_state.self_video:
             raise ValueError('The user must stream at a voice channel of the guild!')
@@ -3101,22 +3131,27 @@ class Client(UserBase):
         if self.has_animated_avatar!=has_animated_avatar:
             old['has_animated_avatar']=self.has_animated_avatar
             self.has_animated_avatar=has_animated_avatar
-
-        verified=data.get('verified',False)
-        if self.verified!=verified:
-            old['verified']=self.verified
-            self.verified=verified
         
         email=data.get('email','')
         if self.email!=email:
             old['email']=self.email
             self.email=email
-
-        premium_type=PremiumType.values[data.get('premium_type',0)]
+        
+        premium_type=PremiumType.INSTANCES[data.get('premium_type',0)]
         if self.premium_type is not premium_type:
             old['premium_type']=premium_type
             self.premium_type=premium_type
-            
+        
+        system=data.get('system',False)
+        if self.system!=system:
+            old['system']=self.system
+            self.system=system
+        
+        verified=data.get('verified',False)
+        if self.verified!=verified:
+            old['verified']=self.verified
+            self.verified=verified
+        
         mfa=data.get('mfa_enabled',False)
         if self.mfa!=mfa:
             old['mfa']=self.mfa
@@ -3149,12 +3184,14 @@ class Client(UserBase):
         else:
             self.avatar=int(avatar,16)
             self.has_animated_avatar=False
-
+        
+        self.system=data.get('system',False)
+        
         self.verified=data.get('verified',False)
         
         self.email=data.get('email','')
 
-        self.premium_type=PremiumType.values[data.get('premium_type',0)]
+        self.premium_type=PremiumType.INSTANCES[data.get('premium_type',0)]
         
         self.mfa=data.get('mfa_enabled',False)
 
@@ -3552,7 +3589,7 @@ class Settings(object):
         except KeyError:
             pass
         else:
-            content_filter=ContentFilterLevel.values[content_filter]
+            content_filter=ContentFilterLevel.INSTANCES[content_filter]
             if self.content_filter is not content_filter:
                 old['content_filter']=self.content_filter
                 self.content_filter=content_filter
@@ -3733,7 +3770,7 @@ class Settings(object):
         except KeyError:
             pass
         else:
-            status=Status.values[status]
+            status=Status.INSTANCES[status]
             if self.status is not status:
                 old['status']=self.status
                 self.status=status
@@ -3752,7 +3789,7 @@ class Settings(object):
         except KeyError:
             pass
         else:
-            theme=Theme.values[theme]
+            theme=Theme.INSTANCES[theme]
             if self.theme is not theme:
                 old['theme']=self.theme
                 self.theme=theme
@@ -3794,7 +3831,7 @@ class Settings(object):
         except KeyError:
             pass
         else:
-            self.content_filter=ContentFilterLevel.values[content_filter]
+            self.content_filter=ContentFilterLevel.INSTANCES[content_filter]
         
         try:
             self.convert_emojis=data['convert_emoticons']
@@ -3901,7 +3938,7 @@ class Settings(object):
         except KeyError:
             pass
         else:
-            self.status=Status.values[status]
+            self.status=Status.INSTANCES[status]
         
         try:
             self.stream_notifications=data['stream_notifications_enabled']
@@ -3913,7 +3950,7 @@ class Settings(object):
         except KeyError:
             pass
         else:
-            self.theme=Theme.values[theme]
+            self.theme=Theme.INSTANCES[theme]
         
         try:
             self.timezone_offset=data['timezone_offset']
@@ -4111,6 +4148,23 @@ class Achievement(object):
 
     icon_url=property(URLS.achievement_icon_url)
     icon_url_as=URLS.achievement_icon_url_as
+    
+    @property
+    def created_at(self):
+        return id_to_time(self.id)
+    
+    def __repr__(self):
+        return f'<{self.__class__.__name__} name={self.name!r}, id={self.id}>'
+    
+    def __str__(self):
+        return self.name
+    
+    def __format__(self,code):
+        if not code:
+            return self.name
+        if code=='c':
+            return f'{self.created_at:%Y.%m.%d-%H:%M:%S}'
+        raise ValueError(f'Unknown format code {code!r} for object of type {self.__class__.__name__!r}')
     
     def _update(self,data):
         old={}

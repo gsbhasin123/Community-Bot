@@ -2,7 +2,7 @@
 from io import IOBase
 from urllib.parse import urlencode
 from .dereaddons_local import multidict
-from . import py_hdrs as hdrs
+from .py_hdrs import CONTENT_TYPE, CONTENT_TRANSFER_ENCODING, CONTENT_LENGTH
 from .py_multipart import MultipartWriter,create_payload,BytesPayload
 from json import dumps as dump_to_json
 
@@ -53,25 +53,25 @@ class Formdata:
         type_options=multidict()
         type_options['name']=name
 
-        if filename is not None:
+        if (filename is not None):
             if not isinstance(filename,str):
-                raise TypeError(f'Filename must be an instance of str. Got: {filename!s}')
-        if filename is None and isinstance(value,IOBase):
+                raise TypeError(f'Filename must be an instance of str. Got: {filename!r}')
+        if (filename is None) and isinstance(value,IOBase):
             filename=getattr(value,'name',name)
-        if filename is not None:
+        if (filename is not None):
             type_options['filename']=filename
             self.is_multipart=True
 
         header={}
         if content_type is not None:
             if not isinstance(content_type, str):
-                raise TypeError(f'Content_type must be an instance of str. Got: {content_type!s}')
-            header[hdrs.CONTENT_TYPE]=content_type
+                raise TypeError(f'Content_type must be an instance of str. Got: {content_type!r}')
+            header[CONTENT_TYPE]=content_type
             self.is_multipart=True
         if transfer_encoding is not None:
             if not isinstance(transfer_encoding, str):
-                raise TypeError(f'Transfer_encoding must be an instance of str. Got: {transfer_encoding!s}')
-            header[hdrs.CONTENT_TRANSFER_ENCODING] = transfer_encoding
+                raise TypeError(f'Transfer_encoding must be an instance of str. Got: {transfer_encoding!r}')
+            header[CONTENT_TRANSFER_ENCODING] = transfer_encoding
             self.is_multipart=True
 
         self.fields.append((type_options,header,value))
@@ -93,22 +93,21 @@ class Formdata:
         #Encode a list of fields using the multipart/form-data MIME format
         for type_options,header,value in self.fields:
             try:
-                if hdrs.CONTENT_TYPE in header:
-                    part=create_payload(value,content_type=header[hdrs.CONTENT_TYPE],
+                if CONTENT_TYPE in header:
+                    part=create_payload(value,content_type=header[CONTENT_TYPE],
                         header=header,encoding=encoding,**type_options.kwargs())
                 else:
                     part=create_payload(value,header=header,encoding=encoding)
-            except (AttributeError,NameError):
-                raise #for testing
+            
             except Exception as err:
                 raise TypeError(f'Can not serialize value: type: {type(value)!r}, header: {header!r}, value: {value!r}') from err
-
+            
             if type_options:
-                part.set_content_disposition('form-data', quote_fields=self.quote_fields,**type_options.kwargs())
-                part.headers.popall(hdrs.CONTENT_LENGTH,None)
-
+                part.set_content_disposition('form-data', type_options.kwargs(), quote_fields=self.quote_fields)
+                part.headers.popall(CONTENT_LENGTH,None)
+            
             self.writer.append_payload(part)
-
+        
         return self.writer
 
     def __call__(self,encoding='utf-8'):

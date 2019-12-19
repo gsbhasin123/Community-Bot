@@ -47,47 +47,100 @@ class DiscordException(Exception):
                     line=stack[-1]
                     if not line:
                         del stack[-1]
-                        if stack:
-                            del stack[-1][-1]
-                            if message_parts:
-                                del message_parts[-1]
+                        if not stack:
+                            break
+                            
+                        del stack[-1][-1]
+                        if not message_parts:
                             continue
-                        break
+                            
+                        del message_parts[-1]
+                        if not message_parts:
+                            continue
+                        
+                        if message_parts[-1]!='.':
+                            continue
+                        
+                        del message_parts[-1]
+                        continue
                     
                     key,value=line[-1]
                     
                     if type(value) is dict:
-                        if key is not None:
-                            message_parts.append(key)
+                        if (key is not None):
+                            if key.isdigit():
+                                # this should not be first ever
+                                message_parts.append(f'[{key}]')
+                            else:
+                                if message_parts:
+                                    message_parts.append('.')
+                                message_parts.append(key)
                         try:
                             error_datas=value['_errors']
                         except KeyError:
                             stack.append(list(value.items()))
-                        else:
-                            for error_data in error_datas:
-                                error_code=error_data.pop('code','ERROR')
-                                error_message=error_data.pop('message','')
-                                if error_data:
-                                    error_extra=' '.join(f'{key}={value!r}' for key,value in error_data.items())
-                                    if error_message:
-                                        error_message=f'{error_message!r} {error_extra}'
-                                    else:
-                                        error_message=error_extra
-                                elif error_message:
-                                    error_message=repr(error_message)
-                                message_parts.append(f'{error_code}({error_message})')
-                                messages.append('.'.join(message_parts))
-                                del message_parts[-1]
-                            del line[-1]
+                            continue
+                        
+                        for error_data in error_datas:
+                            error_code=error_data.pop('code','ERROR')
+                            error_message=error_data.pop('message','')
+                            if error_data:
+                                error_extra=' '.join(f'{key}={value!r}' for key,value in error_data.items())
+                                if error_message:
+                                    error_message=f'{error_message!r} {error_extra}'
+                                else:
+                                    error_message=error_extra
+                            elif error_message:
+                                error_message=repr(error_message)
+                            
                             if message_parts:
-                                del message_parts[-1]
+                                message_parts.append('.')
+                            
+                            message_parts.append(f'{error_code}({error_message})')
+                            messages.append(''.join(message_parts))
+                            del message_parts[-1]
+                            if not message_parts:
+                                continue
+                            
+                            if message_parts[-1]!='.':
+                                continue
+                            
+                            del message_parts[-1]
+                            continue
+                        
+                        del line[-1]
+                        if not message_parts:
+                            continue
+                            
+                        del message_parts[-1]
+                        
+                        if not message_parts:
+                            continue
+                            
+                        if message_parts[-1]!='.':
+                            continue
+                        
+                        del message_parts[-1]
                         continue
                     
-                    message_parts.append(key)
+                    if key.isdigit():
+                        message_parts.append(f'[{key}]')
+                    else:
+                        message_parts.append('.')
+                        message_parts.append(key)
+                    message_parts.append('.')
                     message_parts.append(value)
-                    messages.append('.'.join(message_parts))
+                    messages.append(''.join(message_parts))
                     del line[-1]
-                    del message_parts[-2:]
+                    del message_parts[-3:]
+                    if not message_parts:
+                        continue
+                    
+                    if message_parts[-1]!='.':
+                        continue
+                    
+                    del message_parts[-1]
+                    
         else:
             message_base=''
 

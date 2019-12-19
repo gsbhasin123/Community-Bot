@@ -1,8 +1,14 @@
 ﻿# -*- coding: utf-8 -*-
-from datetime import datetime,timedelta
-from dateutil.relativedelta import relativedelta
+from datetime import datetime, timedelta
+try:
+    from dateutil.relativedelta import relativedelta
+except ImportError:
+    relativedelta=None
+
 from .dereaddons_local import multidict
-from .others import cchunkify,elapsed_time,MessageType
+from .others import cchunkify, MessageType
+if (relativedelta is not None):
+    from .others import elapsed_time
 from .permission import PERM_KEYS
 from .user import ZEROUSER
 
@@ -130,7 +136,7 @@ def str_message(message,index=None,**kwargs):
     else:
         start=f'{index}.: '
     result.append(f'{start}Message {message.id}:')
-    result.append(f'- lenght: {len(message)}')
+    result.append(f'- length: {len(message)}')
     if message.author is not ZEROUSER:
         result.append(f'- author: {message.author:f}',1)
     if message.type is not MessageType.default:
@@ -669,12 +675,21 @@ def str_autoposlist(list_,detailed=False,**kwargs):
 
 def str_guild(guild,index=None,**kwargs):
     result=Pretty_block()
-    result.append(f'Guild {guild.id}:')
+    if index is None:
+        start=''
+    else:
+        start=f'{index}.: '
+    result.append(f'{start}Guild ({guild.id}):')
+    
     result.append(f'- name : {guild.name}',1)
     if guild.icon:
         result.append(f'- icon : {guild.icon_url}',1)
+    if guild.banner:
+        result.append(f'banner : {guild.banner_url}',1)
     if guild.splash:
         result.append(f'- splash : {guild.splash_url}',1)
+    if guild.discovery_splash:
+        result.append(f'- discovery splash : {guild.discovery_splash_url}',1)
     if not guild.clients or not guild.available:
         result.append('- PARTIAL/UNAVAILABLE/DELETED',1)
         return result
@@ -692,22 +707,33 @@ def str_guild(guild,index=None,**kwargs):
         result.append(f'description : {guild.description}',1)
     if guild.vanity_code:
         result.append(f'vanity_code : {guild.vanity_code}',1)
-    if guild.banner:
-        result.append(f'banner : {guild.banner_url}',1)
     if guild.features:
         result.append(f'- features : {", ".join(feature.value for feature in guild.features)}',1)
     if guild.owner.partial:
             result.append(f'- owner : Partial user {guild.owner.id}',1)
     else:
         result.append(f'- owner : {guild.owner:f} {guild.owner.id}',1)
-    if guild.system_channel is not None:
-        result.append(f'- system channel: {guild.system_channel.name} {guild.system_channel.id}',1)
-    if guild.afk_channel is not None:
-        result.append(f'- afk channel: {guild.afk_channel.name} {guild.afk_channel.id}',1)
-    if guild.widget_channel is not None:
-        result.append(f'- widget channel: {guild.widget_channel.name} {guild.widget_channel.id}',1)
-    if guild.embed_channel is not None:
-        result.append(f'- embed channel : {guild.embed_channel.name} {guild.embed_channel.id}',1)
+    
+    system_channel=guild.system_channel
+    if (system_channel is not None):
+        result.append(f'- system channel: {system_channel.name} {system_channel.id}',1)
+    
+    afk_channel=guild.afk_channel
+    if (afk_channel is not None):
+        result.append(f'- afk channel: {afk_channel.name} {afk_channel.id}',1)
+    
+    widget_channel=guild.widget_channel
+    if (widget_channel is not None):
+        result.append(f'- widget channel: {widget_channel.name} {widget_channel.id}',1)
+    
+    embed_channel=guild.embed_channel
+    if (embed_channel is not None):
+        result.append(f'- embed channel : {embed_channel.name} {embed_channel.id}',1)
+    
+    rules_channel=guild.rules_channel
+    if (rules_channel is not None):
+        result.append(f'- rules channel : {rules_channel.name} {rules_channel.id}',1)
+    
     if guild.booster_count:
         result.append(f'- boosters : {guild.booster_count}',1)
         result.append(f'- premium tier : {guild.premium_tier}',1)
@@ -800,11 +826,14 @@ def str_invite(invite,index=None,write_parents=True,**kwargs):
         result.append(f'- uses : {uses}/{max_uses}',1)
     
     created_at=invite.created_at
-    if created_at is not None:
+    if (created_at is not None):
         result.append(f'- created at : {created_at:%Y.%m.%d-%H:%M:%S}',1)
         max_age=invite.max_age
-        if max_age is not None:
-            result.append(f'- time left : {elapsed_time(relativedelta(created_at+timedelta(0,max_age),datetime.utcnow()))}',1)
+        if (max_age is not None):
+            if (relativedelta is None):
+                result.append(f'- max_age : {max_age}')
+            else:
+                result.append(f'- time left : {elapsed_time(relativedelta(created_at+timedelta(0,max_age),datetime.utcnow()))}',1)
     
     target_user=invite.target_user
     if target_user is not ZEROUSER:
@@ -936,10 +965,10 @@ def str_AuditLogEntry(entry,index=None,**kwargs):
     reason=entry.reason
     if reason is not None:
         result.append(f'- reason: {reason}',1)
-    options=entry.options
-    if options is not None:
-        result.append(f'- options:',1)
-        for key,value in options.items():
+    details=entry.details
+    if details is not None:
+        result.append(f'- details:',1)
+        for key,value in details.items():
             result.append(f'{key} : {value}',2)
     changes=entry.changes
     if changes is not None:
@@ -954,7 +983,7 @@ def str_AuditLogEntry(entry,index=None,**kwargs):
                     if attr=='role':
                         text=', '.join(f'{element.name} {element.id}' for element in value)
                     elif attr=='overwrites':
-                        text=', '.join(f'{element.target.name} {element.target.id}' for element in value)
+                        text=', '.join(f'PermOW of {element.target.name} ({element.target.id})' for element in value)
                     else:
                         raise ValueError(attr,value)
                 elif type(value) is str:
@@ -1240,10 +1269,7 @@ def str_achievement(achievement,index=None,**kwargs):
     result.append(f'- description : {achievement.description}',1)
     result.append(f'- secret : {achievement.secret}',1)
     result.append(f'- secure : {achievement.secure}',1)
-    icon_url=achievement.icon_url_as(size=4096)
-    if (icon_url is None):
-        icon_url='None'
-    result.append(f'- icon: {icon_url}',1)
+    result.append(f'- icon: {achievement.icon_url_as(size=4096)}',1)
     
     return result
 

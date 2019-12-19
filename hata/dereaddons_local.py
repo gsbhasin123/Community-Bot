@@ -562,7 +562,7 @@ class multidict_titled(multidict):
     def __delitem__(self,key):
         key=key.title()
         multidict.__delitem__(self,key)
-
+        
     def extend(self,mapping):
         getitem=dict.__getitem__
         setitem=dict.__setitem__               
@@ -816,17 +816,19 @@ class cached_property(object):
     def __set__(self, obj, value):
         raise AttributeError('can\'t set attribute')
 
-class alchemy_incendiary():
+class alchemy_incendiary(object):
     __slots__=('args', 'func', 'kwargs',)
     def __init__(self,func,args,kwargs=None):
         self.func   = func
         self.args   = args
         self.kwargs = kwargs
+    
     def __call__(self):
-        if self.kwargs is None:
+        kwargs=self.kwargs
+        if kwargs is None:
             return self.func(*self.args)
 
-        return self.func(*self.args,**self.kwargs)
+        return self.func(*self.args,**kwargs)
 
 
 class SubCheckType(type):

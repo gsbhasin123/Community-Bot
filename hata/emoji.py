@@ -53,8 +53,11 @@ class Emoji(object):
             emoji=object.__new__(cls)
             emoji.id=emoji_id
             EMOJIS[emoji_id]=emoji
-        else:                
-            if emoji.guild is not None:
+        else:
+            # whenever we receive an emoji, it will have no user data included,
+            # so it is enough if we check for user data only whenever we
+            # receive emoji data from a request or so.
+            if (emoji.guild is not None):
                 if not emoji.user.id:
                     try:
                         user_data=data['user']
@@ -74,8 +77,7 @@ class Emoji(object):
         emoji.managed       = data.get('managed',False)
         emoji.guild         = guild
         emoji.available     = data.get('available',True)
-        if not hasattr(emoji,'user'):
-            emoji.user      = ZEROUSER
+        emoji.user          = ZEROUSER
         emoji.unicode       = None
         
         try:

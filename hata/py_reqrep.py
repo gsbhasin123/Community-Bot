@@ -1,9 +1,21 @@
 ﻿# -*- coding: utf-8 -*-
-from http.cookies import SimpleCookie,CookieError,Morsel
-import json
-import chardet
-import codecs
+import json, ssl, re, codecs
+from http.cookies import SimpleCookie, CookieError, Morsel
+from hashlib import md5, sha1, sha256
+
+try:
+    import cchardet as chardet
+except ImportError:
+    try:
+        import chardet
+    except ImportError as err:
+        message=f'chardet (or cchardet) is not installed, please make sure it is installed before importing {__spec__.parent}'
+        err.args=(message,)
+        err.msg=message
+        raise err from None
+
 NoneType=type(None)
+
 from .dereaddons_local import multidict_titled
 from . import py_hdrs as hdrs
 from .futures import Task
@@ -12,9 +24,7 @@ from .py_multipart import MimeType,create_payload,payload_superclass
 from .py_streams import StreamWriter
 from .py_exceptions import HttpProcessingError,CancelledError,ResponseError
 from .py_formdata import Formdata
-from hashlib import md5,sha1,sha256
-import ssl
-import re
+
 
 json_re = re.compile(r'^application/(?:[\w.+-]+?\+)?json')
 

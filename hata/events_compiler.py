@@ -2,18 +2,28 @@
 #TODO: ask python for GOTO already
 import re
 
-from .dereaddons_local import code,function,method,any_to_any,modulize,MethodLike
+from .dereaddons_local import code, function, method, any_to_any, modulize, \
+    MethodLike
 from .parsers import check_coro, EventDescriptor, check_name, just_convert
 
 
 #for globals at compiling
-from dateutil.relativedelta import relativedelta
+try:
+    from dateutil.relativedelta import relativedelta
+except ImportError:
+    relativedelta = None
+
 from datetime import timedelta
-from . import others
+from .others import USER_MENTION_RP, ROLE_MENTION_RP, CHANNEL_MENTION_RP,   \
+    IS_ID_RP
+
 from .user import USERS
 from .exceptions import DiscordException
 from .emoji import parse_emoji
 from .client_core import CACHE_USER
+
+#for types at eval testing
+from . import client
 
 async def defaultcoro():
     return
@@ -46,28 +56,28 @@ def parse_tdelta(part):
     if result:
         return timedelta(**result)
 
-
-RDELTA_KEYS=('years','months',)+TDELTA_KEYS
-
-def parse_rdelta(part):
-    result={}
-    index=0
-    limit=len(RDELTA_KEYS)
-    for amount,name in DELTA_RP.findall(part):
-        name=name.lower()
-        if index==limit:
-            break
-        while True:
-            key=RDELTA_KEYS[index]
-            index+=1
-            if key.startswith(name):
-                result.setdefault(key,int(amount))
-                break
+if (relativedelta is not None):
+    RDELTA_KEYS=('years','months',)+TDELTA_KEYS
+    
+    def parse_rdelta(part):
+        result={}
+        index=0
+        limit=len(RDELTA_KEYS)
+        for amount,name in DELTA_RP.findall(part):
+            name=name.lower()
             if index==limit:
                 break
-
-    if result:
-        return relativedelta(**result)
+            while True:
+                key=RDELTA_KEYS[index]
+                index+=1
+                if key.startswith(name):
+                    result.setdefault(key,int(amount))
+                    break
+                if index==limit:
+                    break
+    
+        if result:
+            return relativedelta(**result)
 
     
 class _eval_tester_cls(object):
@@ -108,11 +118,7 @@ class _eval_tester_cls(object):
         return type(self)(None)
     def __format__(self,code):
         return ''
-    
-#for types for eval testing
-from . import client
 
-USER_MENTION_RP=others.USER_MENTION_RP
 def parse_user_mention(part,message):
     user_mentions=message.user_mentions
     if user_mentions is None:
@@ -127,7 +133,6 @@ def parse_user_mention(part,message):
         if user.id==user_id:
             return user
 
-ROLE_MENTION_RP=others.ROLE_MENTION_RP
 def parse_role_mention(part,message):
     role_mentions=message.role_mentions
     if role_mentions is None:
@@ -142,7 +147,6 @@ def parse_role_mention(part,message):
         if role.id==role_id:
             return role
 
-CHANNEL_MENTION_RP=others.CHANNEL_MENTION_RP
 def parse_channel_mention(part,message):
     channel_mentions=message.channel_mentions
     if channel_mentions is None:
@@ -166,11 +170,13 @@ _globals = {
     'defaultcoro'           : defaultcoro,
     'DiscordException'      : DiscordException,
     'parse_emoji'           : parse_emoji,
-    'parse_rdelta'          : parse_rdelta,
     'parse_tdelta'          : parse_tdelta,
     'PARSER_RP'             : PARSER_RP,
-    'IS_ID_RP'              : others.IS_ID_RP,
+    'IS_ID_RP'              : IS_ID_RP,
         }
+
+if (relativedelta is not None):
+    _globals['parse_rdelta']=parse_rdelta
 
 _indexed_optional = {
     'user'      : _eval_tester_cls((client.User,client.Client,client.Webhook,client.UserOA2,),'user'),
@@ -179,9 +185,11 @@ _indexed_optional = {
     'emoji'     : _eval_tester_cls(client.Emoji,'emoji'),
     'str'       : _eval_tester_cls(str,'str'),
     'int'       : _eval_tester_cls(int,'int'),
-    'rdelta'    : _eval_tester_cls(relativedelta,'rdelta'),
     'tdelta'    : _eval_tester_cls(timedelta,'tdelta'),
         }
+
+if (relativedelta is not None):
+    _indexed_optional['rdelta']=_eval_tester_cls(relativedelta,'rdelta')
 
 _unindexed_static = {
     'client'    : _eval_tester_cls(client.Client,'client'),
@@ -197,15 +205,16 @@ _unindexed_optional = {
     'rest'      : _eval_tester_cls(str,'rest'),
         }
 
-del others,USERS,defaultcoro,DiscordException,parse_emoji
-del client
+del USERS, defaultcoro, DiscordException, parse_emoji, IS_ID_RP, client
 
 class ParserMeta(object):
+    INSTANCES = {}
+    
     __slots__=('name', 'flags_must', 'flags_default', 'flags_all',
         'passing_enabled', 'mode_enabled', 'default_enabled', 'default_must',)
-    values={}
+    
     def __init__(self,name,flags_must,flags_default,flags_all,passing_enabled,mode_enabled,default_enabled,default_must):
-        self.values[name]   = self
+        self.INSTANCES[name]= self
         self.name           = name
         self.flags_must     = [*flags_must]
         self.flags_default  = flags_default
@@ -288,14 +297,17 @@ ParserMeta('condition', '',         '',             'gr',           True,       
 ParserMeta('str',       '',         '',             'g',            True,           True,           True,           False,          )
 ParserMeta('int',       '',         '',             'g',            True,           True,           True,           False,          )
 ParserMeta('ensure',    '',         '',             'g',            True,           False,          True,           False,          )
-ParserMeta('rdelta',    '',         '',             'g',            True,           True,           True,           False,          )
 ParserMeta('tdelta',    '',         '',             'g',            True,           True,           True,           False,          )
+
+if (relativedelta is not None):
+    ParserMeta('rdelta','',         '',             'g',            True,           True,           True,           False,          )
+
 
 class parsed_line(object):
     __slots__=('meta', 'default', 'flags', 'name', 'mode', 'passit',)
     def __init__(self,name,kwargs):
         try:
-            self.meta=ParserMeta.values[name]
+            self.meta=ParserMeta.INSTANCES[name]
         except KeyError:
             raise ValueError(f'There is nothing defined to deal with {name!r}') from None
         self.name=name
@@ -804,6 +816,8 @@ class content_parser_compiler:
                     result.append( 'index=parsed.end()')
                 result._back_state=go_to+1
                 _locals['part']=_unindexed_optional['part']
+                if is_part_fallback_set:
+                    result.go_out()
             _locals[sub_var_name]=_indexed_optional[case]
 
             if element.default:
@@ -1029,7 +1043,7 @@ class content_parser_compiler:
                 result.extend(return_part_on_fail)
                 _locals[sub_var_name]=_indexed_optional['int']
 
-            elif case in ('tdelta','rdelta'):
+            elif case=='tdelta' or (case=='rdelta' and (relativedelta is not None)):
                 result.append(f'{sub_var_name}=parse_{case}(part)')
                 result.extend(return_part_on_fail_noneset)
             else:
@@ -1047,7 +1061,7 @@ class content_parser_compiler:
             is_part_set=False
 
         result.append(content_parser_compiler._return_line_on_success(is_async,results,is_method))
-
+        
         return result.compile(__file__,_globals,'parser')
 
     def _return_line_on_success(is_async,results,is_method):
@@ -1124,7 +1138,7 @@ class ContentParser(object):
             if case is None:
                 case=''
             self.__name__=case
-            self.__func__=EventDescriptor.default_event
+            self.__func__=EventDescriptor.DEFAULT_EVENT
             return self._wrapper
         
         self.__name__=check_name(func,case)

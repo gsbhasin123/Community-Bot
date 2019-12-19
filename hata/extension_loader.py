@@ -56,7 +56,7 @@ class ExtensionError(Exception):
     __str__=__repr__
     
 class Extension(object):
-    __slots__=('__weakref__', 'spec', 'state', 'lib', 'entry_point', 'exit_point')
+    __slots__=('__weakref__', 'spec', 'state', 'lib', 'entry_point', 'exit_point', )
     
     def __new__(cls, name, entry_point, exit_point):
         try:

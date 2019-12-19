@@ -110,6 +110,29 @@ class URLS:
 
         return f'{CDN_ENDPOINT}/splashes/{guild.id}/{splash:0>32x}.{ext}{end}'
 
+    def guild_discovery_splash_url(guild):
+        discovery_splash=guild.discovery_splash
+        if discovery_splash:
+            return f'{CDN_ENDPOINT}/discovery-splashes/{guild.id}/{discovery_splash:0>32x}.png'
+        return None
+        
+    def guild_discovery_splash_url_as(guild,ext='png',size=None):
+        discovery_splash=guild.discovery_splash
+        if not discovery_splash:
+            return None
+        
+        if size is None:
+            end=''
+        elif size in VALID_ICON_SIZES:
+            end=f'?size={size}'
+        else:
+            raise ValueError(f'Size must be power of 2 between 16 and 4096 and not: {size}.')
+        
+        if ext not in VALID_ICON_FORMATS:
+            raise ValueError(f'Extension must be one of {VALID_ICON_FORMATS}, and not {ext}.')
+
+        return f'{CDN_ENDPOINT}/discovery-splashes/{guild.id}/{discovery_splash:0>32x}.{ext}{end}'
+    
     def guild_banner_url(guild):
         banner=guild.banner
         if not banner:
@@ -252,7 +275,6 @@ class URLS:
             return None
 
         return f'{CDN_ENDPOINT}/app-assets/{application_id}/{asset_image_large}.png'
-
 
     def activity_asset_image_large_url_as(activity,ext='png',size=None):
         application_id=activity.application_id
@@ -405,18 +427,10 @@ class URLS:
         return f'{CDN_ENDPOINT}/team-icons/{team.id}/{icon:0>32x}.{ext}{end}'
 
     def achievement_icon_url(achievement):
-        icon=achievement.icon
-        if not icon:
-            return None
-            
-        return f'{CDN_ENDPOINT}/app-assets/{achievement.application_id}/achievements/{achievement.id}/icons/{icon:0>32x}.png'
-        
-
+        return f'{CDN_ENDPOINT}/app-assets/{achievement.application_id}/achievements/{achievement.id}/icons/{achievement.icon:0>32x}.png'
+    
+    
     def achievement_icon_url_as(achievement,ext='png',size=None):
-        icon=achievement.icon
-        if not icon:
-            return None
-
         if size is None:
             end=''
         elif size in VALID_ICON_SIZES:
@@ -427,7 +441,7 @@ class URLS:
         if ext not in VALID_ICON_FORMATS:
             raise ValueError(f'Extension must be one of {VALID_ICON_FORMATS}, and not {ext}.')
 
-        return f'{CDN_ENDPOINT}/app-assets/{achievement.application_id}/achievements/{achievement.id}/icons/{icon:0>32x}.{ext}{end}'
+        return f'{CDN_ENDPOINT}/app-assets/{achievement.application_id}/achievements/{achievement.id}/icons/{achievement.icon:0>32x}.{ext}{end}'
 
 
 DEFAULT_TIMEOUT=20.
@@ -528,7 +542,7 @@ class DiscordHTTPClient(object):
                         #invalid adress causes OSError too, but we will let it run 5 times, then raise a ConnectionError
                         try_again-=1
                         continue
-                    raise ConnectionError('Invalid adress') from err
+                    raise ConnectionError('Invalid adress or no connection with Discord') from err
                 headers=response.headers
                 status=response.status
                 

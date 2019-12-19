@@ -565,11 +565,8 @@ class DiscordGatewayVoice(object):
         received = await voice_client.loop.sock_recv(voice_client.socket,70)
         # the ip is ascii starting at the 4th byte and ending at the first null
         voice_client._ip=received[4:received.index(0,4)].decode('ascii')
-
-        # the port is a little endian unsigned short in the last two bytes
-        # yes, this is different endianness from everything else
-        voice_client._port=int.from_bytes(packet[-2:],'little')
-
+        voice_client._port=int.from_bytes(received[-2:],'big')
+        
         await self._select_protocol(voice_client._ip,voice_client._port)
         
     async def _send_silente_packet(self):

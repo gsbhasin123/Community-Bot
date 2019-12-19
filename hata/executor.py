@@ -8,8 +8,10 @@ from collections import deque
 
 from .futures import Future, _ignore_frame, render_exc_to_list
 
-_ignore_frame(__spec__.origin,  'wait'          , 'raise exception',    )
-_ignore_frame(__spec__.origin,  'result_no_wait', 'raise exception',    )
+_ignore_frame(__spec__.origin,  'wait'          , 'raise exception'     ,)
+_ignore_frame(__spec__.origin,  'result_no_wait', 'raise exception'     ,)
+_ignore_frame(__spec__.origin,  'run'           , 'result=func()'       ,)
+
 
 class SyncWait(object):
     __slots__=('_exception', '_result', '_waiter',)

@@ -210,7 +210,7 @@ def MESSAGE_CREATE__CAL(client,data):
         return
 
     message=Message.new(data,channel)
-
+    
     Task(client.events.message_create(client,message),client.loop)
 
 def MESSAGE_CREATE__OPT(client,data):
@@ -358,7 +358,7 @@ def MESSAGE_UPDATE__CAL_SC(client,data):
     message=channel._mc_find(message_id)
     if message is None:
         return
-
+    
     if 'edited_timestamp' in data:
         old=message._update(data)
         if old:
@@ -428,7 +428,7 @@ def MESSAGE_UPDATE__OPT_MC(client,data):
     message=channel._mc_find(message_id)
     if message is None:
         return
-
+    
     if 'edited_timestamp' in data:
         message._update_no_return(data)
     else:
@@ -2378,15 +2378,21 @@ def check_argcount_and_convert(func,expected,errormsg=None):
     
     argcount=real_func.__code__.co_argcount-ismethod
     args=real_func.__code__.co_flags&4
-
-    if argcount==expected or (args and argcount<expected):
-        return result
-
-    if errormsg:
-        raise ValueError(errormsg)
+    
+    if type(expected) is int:
+        if argcount==expected or (args and argcount<expected):
+            return result
     else:
-        raise ValueError(f'Invalid argcount, expected {expected}, got {argcount} (args={bool(args)}).')
+        for expected_ in expected:
+            if argcount==expected_ or (args and argcount<expected_):
+                return expected_,result
+    
+    if errormsg is None:
+        errormsg=f'Invalid argcount, expected {expected}, got {argcount} (args={bool(args)}).'
+    
+    raise ValueError(errormsg)
 
+    
 def compare_converted(converted,non_converted):
     # function, both should be functions
     if isinstance(non_converted,function):
@@ -2446,7 +2452,13 @@ def check_passed(func,expected,errormsg=None):
     if check_coro(func):
         return func
     raise TypeError(f'Expected coroutine function, got {func!r}')
-    
+
+def check_passed_tuple(func,expected,errormsg=None):
+    expected,func=check_argcount_and_convert(func,expected,errormsg)
+    if check_coro(func):
+        return expected,func
+    raise TypeError(f'Expected coroutine function, got {func!r}')
+
 # when every line can raise error, feelsgoodman
 def create_valid_event(func,name):
     name=check_name(func,name)
@@ -2772,7 +2784,7 @@ async def default_error_event(client,event,err):
             ]
     
     if isinstance(err,BaseException):
-        client.loop.render_exc_async(err,extracted)
+        await client.loop.render_exc_async(err,extracted)
         return
     
     if type(err) is str:
@@ -2782,22 +2794,27 @@ async def default_error_event(client,event,err):
     
     sys.stderr.write(''.join(extracted))
 
+class asynclist(list):
+    async def __call__(self,client,*args):
+        for coro in self:
+            Task(coro(client,*args),client.loop)
+
 class EventDescriptor(object):
     __slots__=list(EVENTS.defaults)
     __slots__.sort()
 
     @staticmethod
-    async def default_event(*args):
+    async def DEFAULT_EVENT(*args):
         pass
 
     def __init__(self):
-        default_event=self.default_event
+        DEFAULT_EVENT=self.DEFAULT_EVENT
         for name in EVENTS.defaults:
-            object.__setattr__(self,name,default_event)
+            object.__setattr__(self,name,DEFAULT_EVENT)
         object.__setattr__(self,'error',default_error_event)
         object.__setattr__(self,'guild_user_chunk',ChunkQueue())
 
-    def __call__(self,func=None,name=None,pass_to_event=False,case=None):
+    def __call__(self,func=None,name=None,pass_to_event=False,case=None,overwrite=False):
         if func is None:
             return self._wrapper(self,(name,pass_to_event,case),)
         
@@ -2808,11 +2825,38 @@ class EventDescriptor(object):
                 case=check_name(func,None)
             event_handler=getattr(self,name)
             func=event_handler.__setevent__(func,case)
-        else:
-            name,func=create_valid_event(func,name)
+            return func
+        
+        name,func=create_valid_event(func,name)
+        
+        if overwrite:
             setattr(self,name,func)
+            return func
+        
+        parser_name=EVENTS.parsers.get(name,None)
+        if (parser_name is None):
+            raise AttributeError(f'Event name: \'{name}\' is invalid')
+        
+        if func is self.DEFAULT_EVENT:
+            return func
+        
+        parser_default=PARSER_DEFAULTS.all[parser_name]
+        actual=getattr(self,name)
+        if actual is self.DEFAULT_EVENT:
+            object.__setattr__(self,name,func)
+            parser_default.add()
+            return func
+    
+        if type(actual) is asynclist:
+            actual.append(func)
+            return func
+        
+        new=asynclist()
+        new.append(actual)
+        new.append(func)
+        object.__setattr__(self,name,new)
         return func
-
+    
     class _wrapper(object):
         __slots__=('parent', 'args',)
         def __init__(self,parent,args):
@@ -2829,33 +2873,33 @@ class EventDescriptor(object):
         object.__setattr__(self,'guild_user_chunk',ChunkQueue())
         
     def __setattr__(self,name,value):
-        parser_name=EVENTS.parsers.get(name,'')
-        if not parser_name:
+        parser_name=EVENTS.parsers.get(name,None)
+        if (parser_name is None):
             object.__setattr__(self,name,value)
             return
-
+        
         parser_default=PARSER_DEFAULTS.all[parser_name]
         actual=getattr(self,name)
         object.__setattr__(self,name,value)
-        if actual is self.default_event:
-            if value is self.default_event:
+        if actual is self.DEFAULT_EVENT:
+            if value is self.DEFAULT_EVENT:
                 return
             
             parser_default.add()
             return
-
-        if value is self.default_event:
+        
+        if value is self.DEFAULT_EVENT:
             parser_default.remove()
-            
+    
     def __delattr__(self,name):
         actual=getattr(self,name)
-        if actual is self.default_event:
+        if actual is self.DEFAULT_EVENT:
             return
         
-        object.__setattr__(self,name,self.default_event)
+        object.__setattr__(self,name,self.DEFAULT_EVENT)
         
-        parser_name=EVENTS.parsers.get(name,'')
-        if not parser_name:
+        parser_name=EVENTS.parsers.get(name,None)
+        if (parser_name is None):
             return
 
         parser_default=PARSER_DEFAULTS.all[parser_name]

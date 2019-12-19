@@ -328,7 +328,7 @@ class TCPConnector(BaseConnector):
     
     async def resolve(self,host,port=0,family=module_socket.AF_INET):
         infos = await self.loop.getaddrinfo(host,port,type=module_socket.SOCK_STREAM,family=family)
-
+        
         hosts = []
         for family, _, proto, _, address in infos:
             hosts.append({

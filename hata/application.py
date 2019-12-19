@@ -120,22 +120,45 @@ class Team(object):
 class TeamMember(object):
     __slots__=('permissions', 'state', 'user',)
     def __init__(self,data):
-        self.permissions=data['permissions']
+        permissions=data['permissions']
+        permissions.sort()
+        self.permissions=permissions
         self.user=User(data['user'])
-        self.state=TeamMembershipState.values[data['membership_state']]
+        self.state=TeamMembershipState.INSTANCES[data['membership_state']]
 
     def __repr__(self):
-        return f'<{self.__class__.__name__} user={self.user:f} state={self.state.name} permissions={self.permissions}>'
+        return f'<{self.__class__.__name__} user={self.user.full_name} state={self.state.name} permissions={self.permissions}>'
+    
+    def __hash__(self):
+        return self.user.id
+    
+    def __eq__(self,other):
+        if type(self) is not type(other):
+            return False
         
+        if (self.user != other.user):
+            return False
+        
+        if (self.state is not other.state):
+            return False
+        
+        if (self.permissions != other.permissions):
+            return False
+        
+        return True
 
 class TeamMembershipState(object):
+    # class related
+    INSTANCES = [NotImplemented] * 3
+    
+    # object related
     __slots__=('name', 'value',)
-    values={}
+    
     def __init__(self,value,name):
         self.value=value
         self.name=name
         
-        self.values[value]=self
+        self.INSTANCES[value]=self
 
     def __str__(self):
         return self.name
@@ -146,9 +169,12 @@ class TeamMembershipState(object):
     def __repr__(self):
         return f'{self.__class__.__name__}(value={self.value}, name=\'{self.name}\')'
     
+    # predefined
+    NONE    = None
     INVITED = None
     ACCEPTED= None
-    
+
+TeamMembershipState.NONE        = TeamMembershipState(1,'NONE')
 TeamMembershipState.INVITED     = TeamMembershipState(1,'INVITED')
 TeamMembershipState.ACCEPTED    = TeamMembershipState(2,'ACCEPTED')
 

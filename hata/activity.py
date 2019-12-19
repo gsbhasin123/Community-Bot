@@ -11,10 +11,6 @@ from .http import URLS
 PartialEmoji=NotImplemented
 
 class ActivityFlag(int):
-
-    @property
-    def none(self):
-        return not self
     
     @property
     def INSTANCE(self):
@@ -43,14 +39,19 @@ class ActivityFlag(int):
     def __iter__(self):
         if self&1:
             yield 'INSTANCE'
+        
         if (self>>1)&1:
             yield 'JOIN'
+        
         if (self>>2)&1:
             yield 'SPECTATE'
+        
         if (self>>3)&1:
             yield 'JOIN_REQUEST'
+        
         if (self>>4)&1:
             yield 'SYNC'
+        
         if (self>>5)&1:
             yield 'PLAY'
 
