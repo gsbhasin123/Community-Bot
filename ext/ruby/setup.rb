@@ -1,5 +1,0 @@
-system('export GEM_HOME=/home/runner/.gem')
-system('export PATH="$GEM_HOME/bin:$PATH"')
-system('gem install discordrb')
-system('gem install dotenv')
-system('ruby /home/runner/ext/ruby/addons/mail.rb /home/runner/ext/ruby/data/mail/spool')
