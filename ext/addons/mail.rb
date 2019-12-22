@@ -9,6 +9,7 @@ bot.command :inbox do |event|
   if File.exists? File.join(spool, event.author.id.to_s)
      files = Dir.entries(File.join(spool, event.author.id.to_s))
      files = files - %w[. ..]
+     files = files - %w[README.md]
      event.send_embed do |embed|
          embed.title = "Your inbox. Emails: "
          embed.description = files.join("\n")
