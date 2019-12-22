@@ -51,3 +51,14 @@
 /support - Sends the invite link for the support server
 
 /invite - Sends the invite link for the bot
+
+====Mail Help====
+====Made by Codic====
+
+/inbox - Let's you view mail that has been read
+
+/viewmail (Subject) - Let's you view a specific email by name
+
+/rmmail (Subject) - Deletes the specified mail with the subject
+
+/writemail (User) (Subject) (Content) -
