@@ -60,4 +60,8 @@ bot.command :writemail do |event, uname, mailname, *content|
    nil
 end
 
+bot.command :help do |event|
+   nil
+end
+
 bot.run
