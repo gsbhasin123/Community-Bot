@@ -1,1 +1,1 @@
-flask
+git+https://github.com/HuyaneMatsu/hata.git
