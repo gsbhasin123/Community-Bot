@@ -6,7 +6,7 @@ path=require 'path'
 client = new Discord.Client()
 client.commands = new Discord.Collection()
 
-for file in fs.readdirSync(path.join('.', 'cogs', 'djs')) 
+for file in fs.readdirSync(path.join('.', 'cmds')) 
   if file.endsWith('.coffee') or file.endsWith('.js')
     cmd = require "./cmds/#{file}" 
     client.commands.set(cmd.name, cmd)
