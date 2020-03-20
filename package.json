@@ -1,0 +1,22 @@
+{
+  "name": "community_bot",
+  "version": "1.0.0",
+  "description": "An amazing discord bot!",
+  "main": "index.coffee",
+  "scripts": {
+    "test": "node_modules/coffeescript/bin/coffee index.coffee"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://codeberg.org/RevelCorp/Community_Bot.git"
+  },
+  "author": "[\"P̲͈͕r̻̰͜҉óx҉y̸#0294\", \"Ubuntu#5055\", \"codic#3754\"]",
+  "license": "ISC",
+  "dependencies": {
+    "coffeescript": "^2.5.1",
+    "discord.js": "^12.0.2",
+    "dotenv": "^8.2.0",
+    "fs": "0.0.1-security",
+    "path": "^0.12.7"
+  }
+}
