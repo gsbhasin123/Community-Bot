@@ -15,7 +15,7 @@ People who want to run an instance of this bot, if you are using a Linux system,
 Windows users, please use the `shell`, and make sure you use windows 10, otherwise some commands from the `system` cog might not work
 
 Contributors, please put your name by the feature you have added, It would be easier to contact the creator for a certain command if it breaks ToS or something, Also make sure you join the community discord so you can help people.
-Dont Forget To Download the repo!
+https://discord.gg/zGFHQPM
 
 ## Acknowledgements
 **Ubuntu#5055**: - The actual host for the bot (Da best person ever!).
