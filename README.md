@@ -7,7 +7,7 @@ A feature list is available in the [help file](https://github.com/IpProxyNeon/Co
 You can check out the bot by joining [this Discord Server](https://discord.gg/gyHvBXS) too!
 
 ## Programming languages
-You can use any programming language but preferably NodeJS or Python as I use Python the most, and I can understand NodeJS a bit, but any language is fine (Even C)! 
+You can commit in CoffeeScript and JavaScript.
 
 ## Note
 People who want to run an instance of this bot, if you are using a Linux system, you are able to use the 'system' cog
