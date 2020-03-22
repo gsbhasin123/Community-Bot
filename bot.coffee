@@ -18,8 +18,8 @@ client.on 'message', (message) ->
   command = args.shift().toLowerCase()
   return unless client.commands.has(command)
   try
-    hasperms = client.commands.get(command).required_perms.some((perm) -> message.member.guild.me.hasPermission(perm)) or 0
-    hasroles = client.commands.get(command).required_roles is 0 or message.member.roles.some((role) -> client.commands.get(command).required_roles.includes(role.id)) or 0
+    hasperms = client.commands.get(command).required_perms.some((perm) -> message.member.guild.me.hasPermission(perm)) or client.commands.get(command).required_roles.length is 0
+    hasroles = client.commands.get(command).required_roles.length is 0 or message.member.roles.some((role) -> client.commands.get(command).required_roles.includes(role.id)) or
     if hasperms is true and hasroles is true
       client.commands.get(command).execute(message, args) 
     else
