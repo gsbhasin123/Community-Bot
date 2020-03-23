@@ -3,7 +3,7 @@ A discord bot that anyone can modify and commit to! I want it to be as open-sour
 
 ## Features
 You can invite the bot to your server by clicking [here](https://discordapp.com/oauth2/authorize?client_id=610225885093691467&scope=bot&permissions=8).
-You can check out the bot by joining [this Discord Server](https://discord.gg/gyHvBXS) too!
+You can check out the bot by joining [this Discord Server](https://discord.gg/QnUYBwX) too!
 
 ## Programming languages
 You can commit in CoffeeScript and JavaScript.
