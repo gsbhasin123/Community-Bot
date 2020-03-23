@@ -1,4 +1,8 @@
-![](https://cdn.discordapp.com/attachments/650009449951395841/690621644712181830/Untitled45_20200320180253.png)
+
+
+<img src="https://cdn.discordapp.com/attachments/650009449951395841/690621644712181830/Untitled45_20200320180253.png" alt="drawing" width="200"/>
+
+
 # Community Bot
 A discord bot that anyone can modify and commit to! I want it to be as open-source as possible, so feel free to work on any feature you like!
 
