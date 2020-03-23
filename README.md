@@ -11,7 +11,7 @@ You can commit in CoffeeScript and JavaScript.
 
 ### Template for commands
 This is the command structure for JavaScript
-javascript
+```javascript
 module.exports = {
   name: 'ping',
   description: 'pong',
@@ -21,13 +21,16 @@ module.exports = {
     message.reply("Pong");
   }
 };
+```
 And this is the command structure for CoffeeScript
+```coffeescript
 module.exports = 
   name: 'ping'
   description: 'pong'
   required_roles: []
   required_perms: []
   execute: (msg, args) -> message.reply("Pong")
+ ```
 
 ## Note
 People who want to run an instance of this bot, if you are using a Linux system, you are able to use the 'system' cog
