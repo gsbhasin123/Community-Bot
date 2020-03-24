@@ -1,7 +1,8 @@
 fs = require 'fs'
 Discord = require 'discord.js'
-require('dotenv').config()
 path = require 'path'
+
+config = require './config.json'
 
 client = new Discord.Client()
 client.commands = new Discord.Collection()
@@ -13,8 +14,8 @@ for file in fs.readdirSync('cmds')
 client.once 'ready', () -> console.log 'Ready!'
 
 client.on 'message', (message) -> 
-  return unless message.content.startsWith(process.env.PREFIX) or not message.author.bot
-  args = message.content.slice(process.env.PREFIX.length).split(" ")
+  return unless message.content.startsWith(config.prefix) or not message.author.bot
+  args = message.content.slice(config.prefix.length).split(" ")
   command = args.shift().toLowerCase()
   return unless client.commands.has(command)
   try
@@ -39,4 +40,5 @@ client.on 'message', (message) ->
 cmds = {}
 client.commands.forEach((cmd) -> cmds[cmd.name] = {desc: cmd.description, required_roles: cmd.required_roles, required_perms: cmd.required_perms})
 fs.writeFileSync('cmds.json', JSON.stringify(cmds, null, 2), encoding: 'utf8')
-client.login(process.env.TOKEN)
+
+client.login(config.token)
